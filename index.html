@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Quản lý bảng lương &amp; báo cáo nhân sự — tính lương, bảo hiểm bắt buộc và thuế TNCN theo quy định Việt Nam 2026. Xuất Excel giữ nguyên công thức.">
+<title>Quản lý bảng lương &amp; Báo cáo nhân sự</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   1. TOKEN MÀU SẮC — sửa ở đây là đổi toàn bộ giao diện
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  color-scheme: light;
+  --ground:#eef1ed; --surface:#ffffff; --surface-2:#f7faf6; --surface-3:#eef2ec;
+  --ink:#131a16; --ink-2:#55605a; --ink-3:#89938c;
+  --rule:#dde3dd; --rule-2:#c4ccc5; --rule-3:#9aa49c;
+  --accent:#0e6b52; --accent-2:#0a5240; --accent-soft:#e0efe8; --on-accent:#ffffff;
+  --debit:#a8412f; --employer:#8a6212; --employer-soft:#f6eeda;
+  --sel:#0e6b52; --sel-wash:rgba(14,107,82,.09);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --grid:#e3e8e2; --axis:#c4ccc5;
+  --shadow:0 1px 2px rgba(19,26,22,.06), 0 8px 24px -12px rgba(19,26,22,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0c0f0d; --surface:#171c19; --surface-2:#1c2320; --surface-3:#232b27;
+    --ink:#eef2ee; --ink-2:#a8b2ac; --ink-3:#7c857f;
+    --rule:#28302b; --rule-2:#38423b; --rule-3:#4c5750;
+    --accent:#3fae8a; --accent-2:#57c4a0; --accent-soft:#14312a; --on-accent:#08110d;
+    --debit:#e0917f; --employer:#d7a94a; --employer-soft:#2e2513;
+    --sel:#3fae8a; --sel-wash:rgba(63,174,138,.14);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --grid:#242c27; --axis:#38423b;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0c0f0d; --surface:#171c19; --surface-2:#1c2320; --surface-3:#232b27;
+  --ink:#eef2ee; --ink-2:#a8b2ac; --ink-3:#7c857f;
+  --rule:#28302b; --rule-2:#38423b; --rule-3:#4c5750;
+  --accent:#3fae8a; --accent-2:#57c4a0; --accent-soft:#14312a; --on-accent:#08110d;
+  --debit:#e0917f; --employer:#d7a94a; --employer-soft:#2e2513;
+  --sel:#3fae8a; --sel-wash:rgba(63,174,138,.14);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --grid:#242c27; --axis:#38423b;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. NỀN TẢNG
+   ═══════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%}
+[hidden]{display:none !important}
+.num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+.mono{font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace}
+button, input, select{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--sel); outline-offset:1px}
+h1,h2,h3{margin:0; text-wrap:balance}
+.en{color:var(--ink-3); font-weight:400; font-style:italic}
+.spacer{flex:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. THANH ĐIỀU KHIỂN
+   ═══════════════════════════════════════════════════════════════ */
+.chrome{position:sticky; top:0; z-index:40; background:var(--surface); border-bottom:1px solid var(--rule-2)}
+.bar1{display:flex; align-items:center; gap:14px; padding:9px 16px; flex-wrap:wrap}
+.mark{display:flex; align-items:center; gap:9px; padding-right:14px; border-right:1px solid var(--rule)}
+.mark b{font-size:14.5px; letter-spacing:-.005em; display:block; line-height:1.15}
+.mark span{font-size:10.5px; color:var(--ink-3); letter-spacing:.04em; text-transform:uppercase}
+.ctl{display:flex; align-items:center; gap:6px}
+.ctl label{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-3); font-weight:600}
+select.pick{background:var(--surface-2); border:1px solid var(--rule-2); border-radius:5px; padding:4px 8px; font-size:13px; font-weight:500}
+.btn{
+  background:var(--surface-2); border:1px solid var(--rule-2); border-radius:5px;
+  padding:5px 11px; font-size:12.5px; font-weight:500; cursor:pointer; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn:hover{background:var(--surface-3); border-color:var(--rule-3)}
+.btn.primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-2); border-color:var(--accent-2)}
+.btn[disabled]{opacity:.45; cursor:progress}
+.tabs{display:flex; padding:0 16px; overflow-x:auto; scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  border:0; background:none; padding:8px 14px 9px; cursor:pointer; white-space:nowrap;
+  font-size:13px; font-weight:600; color:var(--ink-2); border-bottom:2px solid transparent;
+  font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent); border-bottom-color:var(--accent)}
+.tab small{display:block; font-size:10px; font-weight:400; font-style:italic; color:var(--ink-3)}
+.fbar{display:flex; background:var(--surface-2); border-top:1px solid var(--rule); border-bottom:1px solid var(--rule-2); min-height:34px}
+.fbar .ref{min-width:104px; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--rule-2);
+  font-size:12px; font-weight:600; font-family:"IBM Plex Mono",monospace; color:var(--ink-2); padding:0 8px}
+.fbar .fx{width:34px; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--rule-2);
+  color:var(--ink-3); font-size:13px; font-style:italic; font-weight:600}
+.fbar .body{flex:1; display:flex; align-items:center; padding:5px 12px; gap:10px;
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; overflow-x:auto; white-space:nowrap}
+.fbar .body .hint{font-family:"IBM Plex Sans",sans-serif; color:var(--ink-3); font-style:italic}
+.pill{font-family:"IBM Plex Sans",sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.05em;
+  text-transform:uppercase; padding:2px 7px; border-radius:99px; white-space:nowrap}
+.pill.calc{background:var(--accent-soft); color:var(--accent)}
+.pill.input{background:var(--employer-soft); color:var(--employer)}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. BỐ CỤC & THẺ
+   ═══════════════════════════════════════════════════════════════ */
+.wrap{padding:16px; max-width:1760px; margin:0 auto}
+.panel{display:none}
+.panel.on{display:block}
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:9px; box-shadow:var(--shadow); overflow:hidden}
+.card > header{padding:11px 14px; border-bottom:1px solid var(--rule); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.card > header h2{font-size:14px; font-family:"IBM Plex Sans Condensed",sans-serif}
+.card > header .en{font-size:12px}
+.card .pad{padding:14px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; align-items:start}
+.grid3{display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr)); gap:14px; align-items:start}
+.stack{display:flex; flex-direction:column; gap:14px}
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(184px,1fr)); gap:10px; margin-bottom:14px}
+.tile{background:var(--surface); border:1px solid var(--rule); border-radius:9px; padding:11px 13px; box-shadow:var(--shadow); position:relative; overflow:hidden}
+.tile::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent)}
+.tile.d::before{background:var(--debit)} .tile.e::before{background:var(--employer)}
+.tile .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); font-weight:600}
+.tile .k i{display:block; font-size:10px; letter-spacing:0; text-transform:none; font-weight:400; opacity:.85}
+.tile .v{font-size:21px; font-weight:600; letter-spacing:-.02em; margin-top:3px}
+.tile .sub{font-size:11.5px; color:var(--ink-2); margin-top:2px; display:flex; align-items:center; gap:5px; flex-wrap:wrap}
+.delta{font-weight:600; font-size:11.5px}
+.delta.up{color:var(--accent)} .delta.dn{color:var(--debit)}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. BẢNG LƯƠNG KIỂU EXCEL
+   ═══════════════════════════════════════════════════════════════ */
+.sheetwrap{overflow:auto; max-height:calc(100vh - 320px)}
+table.sheet{border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:12.5px}
+table.sheet th, table.sheet td{border-right:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:3px 8px; text-align:right; white-space:nowrap; background:var(--surface)}
+table.sheet thead th{position:sticky; z-index:20; background:var(--surface-3); font-weight:600;
+  font-family:"IBM Plex Sans Condensed",sans-serif; text-align:center; vertical-align:middle; border-bottom:1px solid var(--rule-2)}
+table.sheet thead tr.band th{top:0; height:26px; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-2)}
+table.sheet thead tr.head th{top:26px; height:38px; font-size:11.5px; line-height:1.25; white-space:normal}
+table.sheet thead tr.head th i{display:block; font-style:italic; font-weight:400; font-size:9.5px; color:var(--ink-3)}
+table.sheet thead tr.abc th{top:64px; height:19px; font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--ink-3); font-weight:500; background:var(--surface-2)}
+th.stick, td.stick{position:sticky; z-index:15}
+table.sheet thead th.stick{z-index:31}
+td.txt{text-align:left} td.ctr{text-align:center}
+tr.emp:hover td{background:var(--sel-wash)}
+tr.grp td{background:var(--accent-soft); font-weight:700; color:var(--accent-2); border-bottom:1px solid var(--rule-2)}
+:root[data-theme="dark"] tr.grp td{color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) tr.grp td{color:var(--accent)}}
+tr.sub td{background:var(--surface-3); font-weight:600; border-top:1px solid var(--rule-2)}
+tr.tot td{background:var(--surface-3); font-weight:700; border-top:2px solid var(--rule-3); border-bottom:2px solid var(--rule-3); font-size:13px}
+td.inp{background:var(--employer-soft); cursor:cell}
+td.calc{cursor:cell}
+td.sel{box-shadow:inset 0 0 0 2px var(--sel); position:relative; z-index:5}
+td.neg{color:var(--debit)} td.emp-cost{color:var(--employer)}
+td .cin{width:100%; border:0; background:transparent; text-align:right; padding:0; font:inherit; font-variant-numeric:tabular-nums}
+.colbar{display:flex; gap:6px; align-items:center; padding:8px 14px; border-bottom:1px solid var(--rule); flex-wrap:wrap; background:var(--surface-2)}
+.chip{border:1px solid var(--rule-2); background:var(--surface); border-radius:99px; padding:3px 10px; font-size:11.5px; font-weight:600; cursor:pointer; color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+.legend-dot{width:9px; height:9px; border-radius:2px; display:inline-block; flex:none}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. PHIẾU LƯƠNG
+   ═══════════════════════════════════════════════════════════════ */
+.slip{margin:0 auto; background:var(--surface); border:1px solid var(--rule); border-radius:9px; box-shadow:var(--shadow); padding:26px 30px; max-width:820px}
+.slip-hd{display:flex; justify-content:space-between; gap:20px; border-bottom:2px solid var(--ink); padding-bottom:12px; flex-wrap:wrap}
+.slip-hd .co{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:15px}
+.slip-hd .co small{display:block; font-weight:400; font-size:11.5px; color:var(--ink-2); font-family:"IBM Plex Sans",sans-serif}
+.slip-hd .ttl{text-align:right}
+.slip-hd .ttl h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:19px; letter-spacing:.02em; text-transform:uppercase}
+.slip-hd .ttl div{font-size:12px; color:var(--ink-2)}
+.slip-who{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:4px 18px; padding:12px 0; border-bottom:1px solid var(--rule)}
+.slip-who div{font-size:12.5px}
+.slip-who b{color:var(--ink-2); font-weight:500}
+.slip table{width:100%; border-collapse:collapse; font-size:13px; margin-top:6px}
+.slip table td{padding:4px 0; border-bottom:1px dotted var(--rule-2)}
+.slip table td:last-child{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.slip table tr.sect td{padding-top:14px; font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.07em; color:var(--ink-3); border-bottom:1px solid var(--rule-2)}
+.slip table tr.ind td:first-child{padding-left:14px; color:var(--ink-2)}
+.slip table tr.tt td{font-weight:700; border-top:1px solid var(--rule-2); border-bottom:1px solid var(--rule-2)}
+.slip table tr.big td{font-size:16px; font-weight:700; border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); padding:8px 0}
+.slip table tr.neg td:last-child{color:var(--debit)}
+.slip .fx{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-3); display:block; font-weight:400}
+.slip .words{margin-top:10px; font-size:12.5px; font-style:italic; color:var(--ink-2)}
+.slip .sigs{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:34px; text-align:center; font-size:12px}
+.slip .sigs b{display:block; font-family:"IBM Plex Sans Condensed",sans-serif}
+.slip .sigs i{color:var(--ink-3); font-size:11px}
+.slip .sigs span{display:block; height:52px}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. BIỂU ĐỒ & BẢNG PHỤ
+   ═══════════════════════════════════════════════════════════════ */
+.chartbox{position:relative}
+svg.chart{display:block; width:100%; height:auto; overflow:visible}
+svg.chart text{font-family:"IBM Plex Sans",sans-serif; font-variant-numeric:tabular-nums}
+.tip{position:fixed; pointer-events:none; background:var(--surface); border:1px solid var(--rule-2); border-radius:7px;
+  box-shadow:var(--shadow); padding:8px 10px; font-size:12px; z-index:60; min-width:150px; opacity:0; transition:opacity .09s}
+.tip.on{opacity:1}
+.tip .th{font-weight:700; margin-bottom:5px}
+.tip .tr{display:flex; align-items:center; gap:10px; justify-content:space-between; margin-top:2px}
+.tip .tr span{display:flex; align-items:center; gap:5px; color:var(--ink-2)}
+.tip .tr b{font-variant-numeric:tabular-nums}
+.legend{display:flex; gap:14px; flex-wrap:wrap; padding:0 14px 12px; font-size:11.5px; color:var(--ink-2)}
+.legend span{display:flex; align-items:center; gap:5px}
+table.tbl{width:100%; border-collapse:collapse; font-size:12.5px}
+table.tbl th{text-align:left; font-family:"IBM Plex Sans Condensed",sans-serif; font-size:11px; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--ink-3); font-weight:600; padding:6px 10px; border-bottom:1px solid var(--rule-2); background:var(--surface)}
+table.tbl td{padding:5px 10px; border-bottom:1px solid var(--rule); vertical-align:top}
+table.tbl td.r, table.tbl th.r{text-align:right; font-variant-numeric:tabular-nums}
+table.tbl tr:hover td{background:var(--sel-wash)}
+table.tbl tr.grand td{border-top:2px solid var(--rule-3); font-weight:700}
+code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--accent-2); background:var(--accent-soft);
+  padding:1px 5px; border-radius:4px; display:inline-block; white-space:pre-wrap; word-break:break-word; line-height:1.6}
+:root[data-theme="dark"] code.f{color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) code.f{color:var(--accent)}}
+.note{font-size:12px; color:var(--ink-2); line-height:1.55}
+.note a{color:var(--accent); text-underline-offset:2px}
+.src{font-size:11px; color:var(--ink-3); line-height:1.8}
+.src a{color:var(--ink-2)}
+.deptcard{background:var(--surface); border:1px solid var(--rule); border-radius:9px; box-shadow:var(--shadow); padding:13px 15px}
+.deptcard h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:14px; display:flex; align-items:center; gap:7px}
+.deptcard .hc{font-size:11.5px; color:var(--ink-3); font-weight:400; margin-left:auto}
+.deptcard dl{display:grid; grid-template-columns:1fr auto; gap:2px 10px; margin:9px 0 0; font-size:12.5px}
+.deptcard dt{color:var(--ink-2)}
+.deptcard dd{margin:0; text-align:right; font-variant-numeric:tabular-nums; font-weight:500}
+.bar-mini{height:7px; border-radius:99px; background:var(--surface-3); overflow:hidden; display:flex; gap:2px; margin-top:10px}
+.bar-mini i{display:block; height:100%}
+.locked{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--accent); background:var(--accent-soft); border-radius:99px; padding:2px 8px}
+#toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--surface); border:1px solid var(--rule-2);
+  box-shadow:var(--shadow); border-radius:8px; padding:10px 14px; font-size:13px; z-index:99; max-width:90vw; display:none}
+
+@media (max-width:720px){
+  .wrap{padding:10px}
+  .slip{padding:18px 16px}
+  .sheetwrap{max-height:none}
+  .mark span{display:none}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none !important; animation:none !important}}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. IN ẤN
+   ═══════════════════════════════════════════════════════════════ */
+@media print{
+  body{background:#fff; color:#000; font-size:9.5pt}
+  .chrome, .colbar, .noprint, .tip, #toast{display:none !important}
+  .wrap{padding:0; max-width:none}
+  .card{border:0; box-shadow:none; border-radius:0}
+  .card > header{border-bottom:1px solid #000}
+  .sheetwrap{max-height:none; overflow:visible}
+  table.sheet{font-size:7.5pt; width:100%; table-layout:auto}
+  table.sheet th, table.sheet td{border:.5pt solid #999 !important; background:#fff !important; color:#000 !important;
+    padding:1px 3px !important; min-width:0 !important; width:auto !important}
+  table.sheet thead th{position:static; background:#eee !important}
+  table.sheet th.stick, table.sheet td.stick{position:static !important; left:auto !important}
+  table.sheet thead tr.head th i, table.sheet thead tr.abc th{display:none}
+  table.sheet td .cin{color:#000 !important}
+  tr.grp td, tr.sub td, tr.tot td{background:#eee !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .slip{border:0; box-shadow:none; padding:0; max-width:none}
+  .slip .fx{display:none}
+  .slip table td{padding:2px 0}
+  .slip table tr.sect td{padding-top:9px}
+  .slip .sigs{margin-top:18px} .slip .sigs span{height:40px}
+  .panel{display:none !important} .panel.on{display:block !important}
+  a[href]:after{content:""}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ THANH ĐIỀU KHIỂN ═══ -->
+<div class="chrome noprint">
+  <div class="bar1">
+    <div class="mark">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="23" height="23" rx="4" fill="var(--accent)"/>
+        <path d="M6 8.5h14M6 13h14M6 17.5h9" stroke="var(--on-accent)" stroke-width="1.7" stroke-linecap="round" opacity=".9"/>
+        <circle cx="19.5" cy="17.5" r="2.6" fill="none" stroke="var(--on-accent)" stroke-width="1.7"/>
+      </svg>
+      <div><b>Quản lý bảng lương</b><span>Payroll &amp; HR report · Vùng I</span></div>
+    </div>
+    <div class="ctl"><label for="mSel">Kỳ lương</label><select class="pick" id="mSel"></select></div>
+    <div class="ctl"><label for="dSel">Bộ phận</label><select class="pick" id="dSel"></select></div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="btnXlsx">⤓ Xuất Excel (.xlsx)</button>
+    <button class="btn" id="btnPrint">⎙ In / PDF</button>
+    <button class="btn" id="btnReset" title="Khôi phục dữ liệu mẫu ban đầu">↺ Đặt lại</button>
+    <button class="btn" id="btnTheme" title="Đổi nền sáng / tối" aria-label="Đổi nền sáng tối">◐</button>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-p="sheet" aria-selected="true">Bảng lương<small>Payroll register</small></button>
+    <button class="tab" role="tab" data-p="slip"  aria-selected="false">Phiếu lương<small>Payslip</small></button>
+    <button class="tab" role="tab" data-p="dept"  aria-selected="false">Phòng ban<small>Departments</small></button>
+    <button class="tab" role="tab" data-p="rep"   aria-selected="false">Báo cáo công ty<small>Company report</small></button>
+    <button class="tab" role="tab" data-p="doc"   aria-selected="false">Công thức &amp; Quy định<small>Formulas &amp; rules</small></button>
+  </div>
+  <div class="fbar">
+    <div class="ref" id="fRef">—</div>
+    <div class="fx"><i>fx</i></div>
+    <div class="body" id="fBody"><span class="hint">Chọn một ô trong bảng lương để xem công thức Excel của ô đó.</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══ TAB 1 · BẢNG LƯƠNG ═══ -->
+  <section class="panel on" id="p-sheet" role="tabpanel">
+    <div class="tiles" id="sheetTiles"></div>
+    <div class="card">
+      <header>
+        <h2>Bảng thanh toán tiền lương</h2><span class="en">Payroll register</span>
+        <span class="spacer"></span><span class="note" id="sheetMeta"></span>
+      </header>
+      <div class="colbar noprint">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600">Nhóm cột</span>
+        <button class="chip" data-g="allow" aria-pressed="true">Phụ cấp</button>
+        <button class="chip" data-g="work"  aria-pressed="true">Công &amp; OT</button>
+        <button class="chip" data-g="ins"   aria-pressed="true">Bảo hiểm NLĐ</button>
+        <button class="chip" data-g="tax"   aria-pressed="true">Thuế TNCN</button>
+        <button class="chip" data-g="emp"   aria-pressed="true">Chi phí DN</button>
+        <span class="spacer"></span>
+        <span class="note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="legend-dot" style="background:var(--employer)"></span> ô nhập liệu (sửa được)
+          <span class="legend-dot" style="background:var(--accent);margin-left:6px"></span> ô công thức
+          <span style="margin-left:8px;color:var(--ink-3)">· tắt bớt nhóm cột để in gọn một trang</span>
+        </span>
+      </div>
+      <div class="sheetwrap"><table class="sheet" id="sheet"></table></div>
+    </div>
+  </section>
+
+  <!-- ═══ TAB 2 · PHIẾU LƯƠNG ═══ -->
+  <section class="panel" id="p-slip" role="tabpanel">
+    <div class="colbar noprint" style="border:1px solid var(--rule);border-radius:9px;margin-bottom:14px;background:var(--surface)">
+      <div class="ctl"><label for="eSel">Nhân viên</label><select class="pick" id="eSel"></select></div>
+      <span class="spacer"></span>
+      <button class="btn" id="slipXlsx">⤓ Excel phiếu này</button>
+      <button class="btn" id="slipDeptXlsx">⤓ Excel cả bộ phận</button>
+      <button class="btn primary" id="slipPrint">⎙ In phiếu lương</button>
+    </div>
+    <div id="slipBox"></div>
+  </section>
+
+  <!-- ═══ TAB 3 · PHÒNG BAN ═══ -->
+  <section class="panel" id="p-dept" role="tabpanel">
+    <div class="tiles" id="deptTiles"></div>
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="card">
+        <header><h2>Cơ cấu chi phí theo phòng ban</h2><span class="en">Cost structure by department</span></header>
+        <div class="pad chartbox" id="c-deptstack"></div>
+        <div class="legend" id="l-deptstack"></div>
+      </div>
+      <div class="card">
+        <header><h2>Chi phí bình quân một nhân sự</h2><span class="en">Average employer cost per head</span></header>
+        <div class="pad chartbox" id="c-deptavg"></div>
+      </div>
+    </div>
+    <div class="grid3" id="deptCards" style="margin-bottom:14px"></div>
+    <div class="card">
+      <header><h2>Bảng số liệu phòng ban</h2><span class="en">Department data table</span>
+        <span class="spacer"></span><span class="note" id="deptMeta"></span></header>
+      <div style="overflow-x:auto"><table class="tbl" id="deptTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ═══ TAB 4 · BÁO CÁO CÔNG TY ═══ -->
+  <section class="panel" id="p-rep" role="tabpanel">
+    <div class="tiles" id="repTiles"></div>
+    <div class="stack">
+      <div class="card">
+        <header><h2>Toàn công ty — diễn biến theo tháng</h2><span class="en">Company-wide monthly trend</span>
+          <span class="spacer"></span><span class="note">Quỹ lương gross · Tổng chi phí doanh nghiệp · Tổng thực lĩnh</span></header>
+        <div class="pad chartbox" id="c-trend"></div>
+        <div class="legend" id="l-trend"></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <header><h2>Cơ cấu chi phí toàn công ty</h2><span class="en">Company cost composition</span></header>
+          <div class="pad chartbox" id="c-compo"></div>
+          <div class="legend" id="l-compo"></div>
+        </div>
+        <div class="card">
+          <header><h2>Tổng chi phí theo phòng ban qua các tháng</h2><span class="en">Employer cost by department, by month</span></header>
+          <div class="pad chartbox" id="c-deptmonth"></div>
+          <div class="legend" id="l-deptmonth"></div>
+        </div>
+      </div>
+      <div class="card">
+        <header><h2>So sánh phòng ban — kỳ hiện tại và kỳ liền trước</h2><span class="en">Department comparison, current vs previous period</span>
+          <span class="spacer"></span><span class="note" id="repMeta"></span></header>
+        <div style="overflow-x:auto"><table class="tbl" id="repDeptTable"></table></div>
+      </div>
+      <div class="card">
+        <header><h2>Biến động toàn công ty</h2><span class="en">Company-level movement</span></header>
+        <div style="overflow-x:auto"><table class="tbl" id="repCoTable"></table></div>
+        <div class="pad note" id="repNarr" style="border-top:1px solid var(--rule)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TAB 5 · CÔNG THỨC & QUY ĐỊNH ═══ -->
+  <section class="panel" id="p-doc" role="tabpanel">
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="card">
+        <header><h2>Hằng số tính lương</h2><span class="en">Fixed statutory constants</span>
+          <span class="spacer"></span><span class="locked">🔒 cố định trong mã nguồn</span></header>
+        <div class="pad" id="constBox"></div>
+      </div>
+      <div class="card">
+        <header><h2>Chi phí doanh nghiệp phải gánh cho một nhân viên</h2><span class="en">Total employer burden</span></header>
+        <div class="pad" id="burdenBox"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <header><h2>Toàn bộ công thức Excel đã dùng</h2><span class="en">Every Excel formula in the register</span>
+        <span class="spacer"></span><span class="note">Hàng dữ liệu đầu tiên nằm ở dòng 7 của sheet Excel</span></header>
+      <div style="overflow-x:auto"><table class="tbl" id="formulaTable"></table></div>
+    </div>
+    <div class="card">
+      <header><h2>Căn cứ pháp lý &amp; nguồn tham khảo</h2><span class="en">Legal basis &amp; sources</span></header>
+      <div class="pad" id="legalBox"></div>
+    </div>
+  </section>
+</div>
+
+<div class="tip" id="tip" role="status" aria-live="off"></div>
+<div id="toast" role="status"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 1 · HẰNG SỐ PHÁP ĐỊNH  (KHÔNG chỉnh được từ giao diện)
+   ---------------------------------------------------------------------------
+   Muốn thay đổi khi luật cập nhật: sửa trực tiếp các giá trị bên dưới rồi
+   commit lại. Object được Object.freeze() nên mọi cố gắng ghi đè lúc chạy
+   đều bị bỏ qua (và báo lỗi ở chế độ strict).
+   ═══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+const K = Object.freeze({
+  /* --- Bảo hiểm bắt buộc: phần người lao động đóng (tổng 10,5%) --- */
+  BHXH_NLD: 0.08,          // hưu trí & tử tuất
+  BHYT_NLD: 0.015,
+  BHTN_NLD: 0.01,
+
+  /* --- Bảo hiểm bắt buộc: phần doanh nghiệp đóng (tổng 21,5%) --- */
+  BHXH_DN:  0.175,         // 14% hưu trí–tử tuất + 3% ốm đau–thai sản + 0,5% TNLĐ–BNN
+  BHYT_DN:  0.03,
+  BHTN_DN:  0.01,
+  KPCD:     0.02,          // kinh phí công đoàn — doanh nghiệp nộp 2%
+
+  /* --- Trần / sàn tiền lương làm căn cứ đóng --- */
+  MUC_THAM_CHIEU: 2340000,     // mức tham chiếu (bằng lương cơ sở hiện hành)
+  TRAN_BHXH:     46800000,     // = 20 × mức tham chiếu → trần BHXH & BHYT
+  LTTV_VUNG1:     5300000,     // lương tối thiểu vùng I (NĐ 293/2025/NĐ-CP)
+  TRAN_BHTN:    106000000,     // = 20 × lương tối thiểu vùng → trần BHTN
+
+  /* --- Thuế thu nhập cá nhân (áp dụng từ kỳ tính thuế 2026) --- */
+  GTGC_BAN_THAN: 15500000,     // giảm trừ gia cảnh cho bản thân / tháng
+  GTGC_NPT:       6200000,     // giảm trừ cho mỗi người phụ thuộc / tháng
+  MAX_AN_TRUA:     730000,     // tiền ăn giữa ca được miễn thuế tối đa / tháng
+  MIEN_DIEN_THOAI:      1,     // 1 = khoán điện thoại theo quy chế → miễn thuế
+  MIEN_XANG_XE:         0,     // 0 = xăng xe đi làm hằng ngày → chịu thuế
+
+  /* --- Làm thêm giờ --- */
+  HS_OT: 1.5                   // hệ số làm thêm ngày thường (150%)
+});
+
+/* Biểu thuế lũy tiến từng phần — 5 bậc, dạng rút gọn.
+   Thuế = thuế suất × TNTT − số trừ. */
+const TAX_BANDS = Object.freeze([
+  Object.freeze({ upto:  10000000, rate: 0.05, sub:        0 }),
+  Object.freeze({ upto:  30000000, rate: 0.10, sub:   500000 }),
+  Object.freeze({ upto:  60000000, rate: 0.20, sub:  3500000 }),
+  Object.freeze({ upto: 100000000, rate: 0.30, sub:  9500000 }),
+  Object.freeze({ upto:   Infinity, rate: 0.35, sub: 14500000 })
+]);
+
+/* Diễn giải hằng số — dùng cho tab tài liệu và sheet ThamSo trong file Excel.
+   Thứ tự ở đây quyết định thứ tự dòng trên sheet ThamSo, và tên (name) trở
+   thành Defined Name trong workbook để công thức đọc được như tiếng Việt. */
+const CONST_DOC = [
+  ['BHXH_NLD',       'BHXH — người lao động',                    'Employee social insurance',      '%'],
+  ['BHYT_NLD',       'BHYT — người lao động',                    'Employee health insurance',      '%'],
+  ['BHTN_NLD',       'BHTN — người lao động',                    'Employee unemployment insurance','%'],
+  ['BHXH_DN',        'BHXH — doanh nghiệp (14 + 3 + 0,5)',       'Employer social insurance',      '%'],
+  ['BHYT_DN',        'BHYT — doanh nghiệp',                      'Employer health insurance',      '%'],
+  ['BHTN_DN',        'BHTN — doanh nghiệp',                      'Employer unemployment insurance','%'],
+  ['KPCD',           'Kinh phí công đoàn — doanh nghiệp',        'Trade-union fund',               '%'],
+  ['MUC_THAM_CHIEU', 'Mức tham chiếu (sàn đóng BHXH/BHYT)',      'Reference level',                'đ'],
+  ['TRAN_BHXH',      'Trần đóng BHXH/BHYT = 20 × mức tham chiếu','SI / HI ceiling',                'đ'],
+  ['LTTV_VUNG1',     'Lương tối thiểu vùng I',                   'Region-I minimum wage',          'đ'],
+  ['TRAN_BHTN',      'Trần đóng BHTN = 20 × LTTV vùng',          'UI ceiling',                     'đ'],
+  ['GTGC_BAN_THAN',  'Giảm trừ gia cảnh — bản thân',             'Personal relief',                'đ'],
+  ['GTGC_NPT',       'Giảm trừ — mỗi người phụ thuộc',           'Dependant relief',               'đ'],
+  ['MAX_AN_TRUA',    'Tiền ăn giữa ca miễn thuế tối đa',         'Tax-free meal allowance',        'đ'],
+  ['MIEN_DIEN_THOAI','Khoán điện thoại được miễn thuế (1 = có)', 'Phone allowance exempt',         '0/1'],
+  ['MIEN_XANG_XE',   'Khoán xăng xe được miễn thuế (1 = có)',    'Fuel allowance exempt',          '0/1'],
+  ['HS_OT',          'Hệ số làm thêm giờ ngày thường',           'Weekday overtime factor',        '×']
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 2 · DỮ LIỆU CÔNG TY  (thay bằng dữ liệu thật của bạn ở đây)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const COMPANY = Object.freeze({
+  ten: 'CÔNG TY TNHH MINH PHÁT SOLUTIONS',
+  dc : 'Số 128 Nguyễn Thị Minh Khai, P. Bàn Cờ, TP. Hồ Chí Minh',
+  mst: '0318 xxx xxx',
+  vung:'Vùng I'
+});
+
+const DEPTS = [
+  { id:'BGD',  vi:'Ban Giám đốc',              en:'Executive board' },
+  { id:'KD',   vi:'Phòng Kinh doanh',          en:'Sales' },
+  { id:'KTHC', vi:'Phòng Kế toán & HCNS',      en:'Finance & HR' },
+  { id:'KTSX', vi:'Phòng Kỹ thuật & Sản xuất', en:'Engineering & Production' }
+];
+
+/* ncc = ngày công chuẩn của kỳ lương */
+const MONTHS = [
+  { id:'2026-06', vi:'Tháng 6/2026', en:'Jun 2026', sheet:'BL_T06', ncc:26 },
+  { id:'2026-07', vi:'Tháng 7/2026', en:'Jul 2026', sheet:'BL_T07', ncc:27 },
+  { id:'2026-08', vi:'Tháng 8/2026', en:'Aug 2026', sheet:'BL_T08', ncc:26 }
+];
+
+/* Mỗi dòng: mã, họ tên, chức vụ, bộ phận, lương chính, PC trách nhiệm,
+   PC ăn trưa, PC điện thoại, PC xăng xe, số người phụ thuộc, lương đóng BH,
+   rồi [ngày công, giờ OT, thưởng, tạm ứng] cho ba kỳ lương T6 / T7 / T8. */
+const SEED = [
+ ['NV001','Nguyễn Hoàng Minh','Giám đốc điều hành','BGD',45000000,8000000,730000,2000000,2000000,2,60000000,
+   [[26,0,0,0],[27,0,20000000,0],[24,0,0,0]]],
+ ['NV002','Trần Thị Bích Hà','Phó Giám đốc','BGD',32000000,5000000,730000,1500000,1500000,1,40000000,
+   [[26,0,0,0],[27,0,12000000,0],[26,0,0,0]]],
+ ['NV003','Lê Quang Vinh','Trưởng phòng Kinh doanh','KD',25000000,3500000,730000,1000000,1200000,2,25000000,
+   [[26,6,3000000,0],[27,10,9000000,0],[26,8,4500000,0]]],
+ ['NV004','Phạm Thu Trang','Chuyên viên KD cấp cao','KD',17000000,1000000,730000,500000,800000,1,17000000,
+   [[25,8,2000000,2000000],[27,12,5500000,0],[26,10,3200000,0]]],
+ ['NV005','Đỗ Minh Khoa','Nhân viên Kinh doanh','KD',12000000,0,730000,400000,600000,0,12000000,
+   [[26,10,1500000,0],[26,14,3800000,0],[25,12,2400000,1500000]]],
+ ['NV006','Vũ Ngọc Lan','Nhân viên Kinh doanh','KD',11000000,0,730000,400000,600000,1,11000000,
+   [[24,6,900000,0],[27,10,3000000,0],[26,9,1800000,0]]],
+ ['NV007','Hoàng Anh Tuấn','Nhân viên Kinh doanh','KD',10000000,0,730000,400000,600000,0,10000000,
+   [[26,8,1200000,0],[25,8,2200000,0],[26,11,2600000,0]]],
+ ['NV008','Nguyễn Thị Mai Hương','Kế toán trưởng','KTHC',24000000,3000000,730000,800000,500000,2,24000000,
+   [[26,4,0,0],[27,12,6000000,0],[26,6,0,0]]],
+ ['NV009','Trịnh Văn Sơn','Kế toán tổng hợp','KTHC',15000000,0,730000,300000,400000,1,15000000,
+   [[26,6,0,0],[27,16,3000000,0],[26,8,0,0]]],
+ ['NV010','Bùi Thanh Thảo','Kế toán viên','KTHC',10500000,0,730000,300000,400000,0,10500000,
+   [[26,4,0,0],[27,14,2000000,0],[23,6,0,2000000]]],
+ ['NV011','Đặng Hải Yến','Chuyên viên Nhân sự','KTHC',13000000,800000,730000,300000,400000,1,13000000,
+   [[26,0,0,0],[27,6,2500000,0],[26,4,0,0]]],
+ ['NV012','Phan Đức Long','Trưởng phòng Kỹ thuật','KTSX',26000000,3500000,900000,900000,900000,2,26000000,
+   [[26,8,2000000,0],[27,14,7000000,0],[26,10,2500000,0]]],
+ ['NV013','Nguyễn Bá Cường','Kỹ sư trưởng','KTSX',20000000,1500000,900000,500000,600000,1,20000000,
+   [[26,12,1500000,0],[27,20,5000000,0],[26,15,2000000,0]]],
+ ['NV014','Lý Thị Kim Chi','Kỹ sư phần mềm','KTSX',18000000,0,900000,400000,500000,0,18000000,
+   [[26,10,1000000,0],[27,18,4000000,0],[26,14,1500000,0]]],
+ ['NV015','Trần Quốc Bảo','Kỹ thuật viên','KTSX',13500000,0,900000,300000,500000,1,13500000,
+   [[26,14,800000,0],[27,22,3000000,0],[26,18,1200000,1000000]]],
+ ['NV016','Ngô Minh Hiếu','Kỹ thuật viên','KTSX',12500000,0,900000,300000,500000,0,12500000,
+   [[25,12,700000,0],[27,20,2800000,0],[26,16,1000000,0]]],
+ ['NV017','Võ Thành Nam','Công nhân vận hành','KTSX',9500000,0,900000,200000,400000,2,9500000,
+   [[26,16,600000,0],[27,26,2400000,0],[26,20,900000,0]]],
+ ['NV018','Huỳnh Gia Bảo','Công nhân vận hành','KTSX',8800000,0,900000,200000,400000,0,8800000,
+   [[26,18,500000,0],[27,28,2200000,0],[22,12,700000,1200000]]]
+];
+
+function seedEmployees(){
+  return SEED.map((r, i) => ({
+    stt:i+1, id:r[0], ten:r[1], chucVu:r[2], bp:r[3],
+    luongChinh:r[4], pcTrachNhiem:r[5], pcAnTrua:r[6], pcDienThoai:r[7], pcXangXe:r[8],
+    npt:r[9], luongBH:r[10],
+    thang: Object.fromEntries(MONTHS.map((m, k) => [m.id, {
+      ngayCong:r[11][k][0], otGio:r[11][k][1], thuong:r[11][k][2], tamUng:r[11][k][3]
+    }]))
+  }));
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 3 · TRẠNG THÁI ỨNG DỤNG
+   Chỉ dữ liệu nhân sự được lưu lại (localStorage). Hằng số luôn lấy từ K.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const STORE_KEY = 'payroll-app-v2';
+
+const S = {
+  emps  : seedEmployees(),
+  month : MONTHS[MONTHS.length - 1].id,
+  dept  : 'ALL',
+  empSel: 'NV003',
+  cols  : { allow:true, work:true, ins:true, tax:true, emp:true },
+  sel   : null
+};
+
+(function restore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const o = JSON.parse(raw);
+    if(o && Array.isArray(o.emps) && o.emps.length) S.emps = o.emps;
+  }catch(e){ /* bỏ qua: dữ liệu hỏng hoặc trình duyệt chặn storage */ }
+})();
+
+function persist(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({ emps:S.emps })); }
+  catch(e){ /* chế độ riêng tư: không lưu được, ứng dụng vẫn chạy bình thường */ }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 4 · ENGINE TÍNH LƯƠNG
+   Mỗi biến trả về tương ứng 1-1 với một cột / một công thức Excel.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const R = n => Math.round(n);
+
+/** Thuế TNCN theo biểu lũy tiến 5 bậc (dạng rút gọn). */
+function thueLuyTien(tntt){
+  if(!(tntt > 0)) return 0;
+  for(const b of TAX_BANDS) if(tntt <= b.upto) return R(tntt * b.rate - b.sub);
+  return 0;
+}
+
+/** Tính toàn bộ chỉ tiêu lương của một nhân viên trong một kỳ lương. */
+function calc(e, monthId){
+  const M = MONTHS.find(m => m.id === monthId);
+  const t = e.thang[monthId];
+  const ncc = M.ncc, nc = t.ngayCong, tyLe = nc / ncc;
+
+  /* --- Thu nhập --- */
+  const tongPhuCap     = e.pcTrachNhiem + e.pcAnTrua + e.pcDienThoai + e.pcXangXe;
+  const luongTheoCong  = R((e.luongChinh + tongPhuCap) / ncc * nc);
+  const donGiaGio      = e.luongChinh / (ncc * 8);
+  const tienOT         = R(donGiaGio * t.otGio * K.HS_OT);
+  const tongThuNhap    = luongTheoCong + tienOT + t.thuong;
+
+  /* --- Căn cứ đóng bảo hiểm: kẹp giữa sàn và trần --- */
+  const canCuXHYT = Math.min(Math.max(e.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHXH);
+  const canCuTN   = Math.min(Math.max(e.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHTN);
+  const capped    = e.luongBH > K.TRAN_BHXH;
+
+  const bhxhNLD = R(canCuXHYT * K.BHXH_NLD);
+  const bhytNLD = R(canCuXHYT * K.BHYT_NLD);
+  const bhtnNLD = R(canCuTN   * K.BHTN_NLD);
+  const bhNLD   = bhxhNLD + bhytNLD + bhtnNLD;
+
+  const bhxhDN = R(canCuXHYT * K.BHXH_DN);
+  const bhytDN = R(canCuXHYT * K.BHYT_DN);
+  const bhtnDN = R(canCuTN   * K.BHTN_DN);
+  const kpcd   = R(canCuXHYT * K.KPCD);
+  const bhDN   = bhxhDN + bhytDN + bhtnDN + kpcd;
+
+  /* --- Thu nhập miễn thuế --- */
+  const anTruaTT   = R(e.pcAnTrua * tyLe);
+  const mienAnTrua = Math.min(anTruaTT, K.MAX_AN_TRUA);
+  const mienDT     = R(e.pcDienThoai * tyLe) * K.MIEN_DIEN_THOAI;
+  const mienXX     = R(e.pcXangXe   * tyLe) * K.MIEN_XANG_XE;
+  const mienOT     = R(donGiaGio * t.otGio * (K.HS_OT - 1));   // phần trả cao hơn giờ thường
+  const tongMien   = mienAnTrua + mienDT + mienXX + mienOT;
+
+  /* --- Thuế TNCN --- */
+  const tnChiuThue  = tongThuNhap - tongMien;
+  const giamTruGC   = K.GTGC_BAN_THAN + K.GTGC_NPT * e.npt;
+  const tongGiamTru = giamTruGC + bhNLD;
+  const tntt        = Math.max(tnChiuThue - tongGiamTru, 0);
+  const thueTNCN    = thueLuyTien(tntt);
+
+  /* --- Kết quả --- */
+  const thucLinh = tongThuNhap - bhNLD - thueTNCN - t.tamUng;
+  const chiPhiDN = tongThuNhap + bhDN;
+
+  return {
+    ncc, nc, otGio:t.otGio, thuong:t.thuong, tamUng:t.tamUng,
+    tongPhuCap, luongTheoCong, donGiaGio, tienOT, tongThuNhap,
+    canCuXHYT, canCuTN, capped, bhxhNLD, bhytNLD, bhtnNLD, bhNLD,
+    bhxhDN, bhytDN, bhtnDN, kpcd, bhDN,
+    anTruaTT, mienAnTrua, mienDT, mienXX, mienOT, tongMien,
+    tnChiuThue, giamTruGC, tongGiamTru, tntt, thueTNCN,
+    thucLinh, chiPhiDN
+  };
+}
+
+/* --- Tổng hợp --- */
+const empsOf = d => d === 'ALL' ? S.emps : S.emps.filter(e => e.bp === d);
+
+function totals(list, monthId){
+  const z = { n:list.length, luongChinh:0, tongPhuCap:0, luongTheoCong:0, tienOT:0, thuong:0,
+              tongThuNhap:0, bhNLD:0, bhDN:0, kpcd:0, thueTNCN:0, tamUng:0, thucLinh:0,
+              chiPhiDN:0, nc:0, otGio:0, npt:0 };
+  for(const e of list){
+    const c = calc(e, monthId);
+    z.luongChinh += e.luongChinh; z.npt += e.npt;
+    z.tongPhuCap += c.tongPhuCap; z.luongTheoCong += c.luongTheoCong;
+    z.tienOT += c.tienOT; z.thuong += c.thuong; z.tongThuNhap += c.tongThuNhap;
+    z.bhNLD += c.bhNLD; z.bhDN += c.bhDN; z.kpcd += c.kpcd;
+    z.thueTNCN += c.thueTNCN; z.tamUng += c.tamUng;
+    z.thucLinh += c.thucLinh; z.chiPhiDN += c.chiPhiDN;
+    z.nc += c.nc; z.otGio += c.otGio;
+  }
+  z.bqChiPhi  = z.n ? z.chiPhiDN / z.n : 0;
+  z.bqThucLinh= z.n ? z.thucLinh / z.n : 0;
+  return z;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 5 · MÔ HÌNH CỘT  —  nguồn sự thật chung cho giao diện VÀ file Excel
+   ---------------------------------------------------------------------------
+   • L      : chữ cái cột trên sheet Excel
+   • inp    : khoá dữ liệu nhập tay (month:true nếu thuộc về từng kỳ lương)
+   • get    : hàm lấy giá trị đã tính
+   • f(r)   : công thức Excel cho dòng r  →  hiện trên thanh fx và ghi vào .xlsx
+   • g      : nhóm cột (bật/tắt trên giao diện)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const FIRST_ROW = 7;     // dòng dữ liệu đầu tiên trên sheet Excel
+const HEAD_BAND = 5;     // dòng tiêu đề gộp
+const HEAD_ROW  = 6;     // dòng tên cột
+
+const COLS = [
+ {L:'A', k:'stt',    vi:'STT',         en:'No.',        g:'id', t:'ctr', w:38,  get:e=>e.stt, plain:true},
+ {L:'B', k:'id',     vi:'Mã NV',       en:'Code',       g:'id', t:'txt', w:62,  get:e=>e.id, text:true},
+ {L:'C', k:'ten',    vi:'Họ và tên',   en:'Full name',  g:'id', t:'txt', w:172, get:e=>e.ten, text:true},
+ {L:'D', k:'chucVu', vi:'Chức vụ',     en:'Position',   g:'id', t:'txt', w:158, get:e=>e.chucVu, text:true},
+ {L:'E', k:'bp',     vi:'Bộ phận',     en:'Dept.',      g:'id', t:'ctr', w:56,  get:e=>e.bp, text:true},
+ {L:'F', k:'npt',    vi:'Số NPT',      en:'Depend.',    g:'id', t:'ctr', w:52,  inp:'npt', plain:true},
+ {L:'G', k:'luongChinh', vi:'Lương chính', en:'Base salary', g:'id', w:104, inp:'luongChinh'},
+
+ {L:'H', k:'pcTrachNhiem', vi:'Trách nhiệm', en:'Responsibility', g:'allow', w:92, inp:'pcTrachNhiem'},
+ {L:'I', k:'pcAnTrua',     vi:'Ăn trưa',     en:'Meal',           g:'allow', w:78, inp:'pcAnTrua'},
+ {L:'J', k:'pcDienThoai',  vi:'Điện thoại',  en:'Phone',          g:'allow', w:82, inp:'pcDienThoai'},
+ {L:'K', k:'pcXangXe',     vi:'Xăng xe',     en:'Fuel',           g:'allow', w:80, inp:'pcXangXe'},
+ {L:'L', k:'tongPhuCap',   vi:'Tổng phụ cấp',en:'Total allowances',g:'allow',w:98,
+   get:(e,c)=>c.tongPhuCap, f:r=>`=SUM(H${r}:K${r})`},
+
+ {L:'M', k:'ncc', vi:'Ngày công chuẩn', en:'Std. days', g:'work', t:'ctr', w:58, plain:true,
+   get:(e,c)=>c.ncc, f:()=>`=$D$4`},   // ngày công chuẩn khai báo một lần ở ô D4
+ {L:'N', k:'nc',  vi:'Ngày công TT',    en:'Actual days',g:'work', t:'ctr', w:58, inp:'ngayCong', month:true, plain:true},
+ {L:'O', k:'luongTheoCong', vi:'Lương theo ngày công', en:'Pro-rated pay', g:'work', w:110,
+   get:(e,c)=>c.luongTheoCong, f:r=>`=ROUND((G${r}+L${r})/M${r}*N${r},0)`},
+ {L:'P', k:'otGio',  vi:'Giờ OT',  en:'OT hrs', g:'work', t:'ctr', w:54, inp:'otGio', month:true, plain:true},
+ {L:'Q', k:'tienOT', vi:'Tiền làm thêm', en:'Overtime pay', g:'work', w:98,
+   get:(e,c)=>c.tienOT, f:r=>`=ROUND(G${r}/(M${r}*8)*P${r}*HS_OT,0)`},
+ {L:'R', k:'thuong', vi:'Thưởng', en:'Bonus', g:'work', w:92, inp:'thuong', month:true},
+
+ {L:'S', k:'tongThuNhap', vi:'TỔNG THU NHẬP', en:'Gross pay', g:'id', w:112, bold:true,
+   get:(e,c)=>c.tongThuNhap, f:r=>`=O${r}+Q${r}+R${r}`},
+
+ {L:'T', k:'luongBH',  vi:'Lương đóng BH', en:'SI base', g:'ins', w:104, inp:'luongBH'},
+ {L:'U', k:'bhxhNLD',  vi:'BHXH 8%',   en:'SI 8%',   g:'ins', w:84, neg:true,
+   get:(e,c)=>c.bhxhNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHXH_NLD,0)`},
+ {L:'V', k:'bhytNLD',  vi:'BHYT 1,5%', en:'HI 1.5%', g:'ins', w:80, neg:true,
+   get:(e,c)=>c.bhytNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHYT_NLD,0)`},
+ {L:'W', k:'bhtnNLD',  vi:'BHTN 1%',   en:'UI 1%',   g:'ins', w:76, neg:true,
+   get:(e,c)=>c.bhtnNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHTN)*BHTN_NLD,0)`},
+ {L:'X', k:'bhNLD',    vi:'Cộng BH trừ vào lương', en:'Employee SI total', g:'ins', w:104, neg:true, bold:true,
+   get:(e,c)=>c.bhNLD, f:r=>`=SUM(U${r}:W${r})`},
+
+ {L:'Y', k:'tongMien', vi:'TN miễn thuế', en:'Tax-exempt', g:'tax', w:98,
+   get:(e,c)=>c.tongMien,
+   f:r=>`=MIN(ROUND(I${r}/M${r}*N${r},0),MAX_AN_TRUA)+ROUND(J${r}/M${r}*N${r},0)*MIEN_DIEN_THOAI`
+      + `+ROUND(K${r}/M${r}*N${r},0)*MIEN_XANG_XE+ROUND(G${r}/(M${r}*8)*P${r}*(HS_OT-1),0)`},
+ {L:'Z',  k:'tnChiuThue',  vi:'TN chịu thuế', en:'Taxable income', g:'tax', w:104,
+   get:(e,c)=>c.tnChiuThue, f:r=>`=S${r}-Y${r}`},
+ {L:'AA', k:'tongGiamTru', vi:'Tổng giảm trừ', en:'Total deductions', g:'tax', w:106,
+   get:(e,c)=>c.tongGiamTru, f:r=>`=GTGC_BAN_THAN+GTGC_NPT*F${r}+X${r}`},
+ {L:'AB', k:'tntt', vi:'Thu nhập tính thuế', en:'Assessable income', g:'tax', w:110,
+   get:(e,c)=>c.tntt, f:r=>`=MAX(Z${r}-AA${r},0)`},
+ {L:'AC', k:'thueTNCN', vi:'Thuế TNCN', en:'PIT', g:'tax', w:96, neg:true,
+   get:(e,c)=>c.thueTNCN,
+   f:r=>`=ROUND(IF(AB${r}<=10000000,AB${r}*5%,IF(AB${r}<=30000000,AB${r}*10%-500000,`
+      + `IF(AB${r}<=60000000,AB${r}*20%-3500000,IF(AB${r}<=100000000,AB${r}*30%-9500000,`
+      + `AB${r}*35%-14500000)))),0)`},
+
+ {L:'AD', k:'tamUng',   vi:'Tạm ứng',    en:'Advance', g:'id', w:88, neg:true, inp:'tamUng', month:true},
+ {L:'AE', k:'thucLinh', vi:'THỰC LĨNH',  en:'Net pay', g:'id', w:118, bold:true,
+   get:(e,c)=>c.thucLinh, f:r=>`=S${r}-X${r}-AC${r}-AD${r}`},
+
+ {L:'AF', k:'bhxhDN', vi:'BHXH 17,5%', en:'SI 17.5%', g:'emp', w:92, emp:true,
+   get:(e,c)=>c.bhxhDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHXH_DN,0)`},
+ {L:'AG', k:'bhytDN', vi:'BHYT 3%', en:'HI 3%', g:'emp', w:82, emp:true,
+   get:(e,c)=>c.bhytDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHYT_DN,0)`},
+ {L:'AH', k:'bhtnDN', vi:'BHTN 1%', en:'UI 1%', g:'emp', w:76, emp:true,
+   get:(e,c)=>c.bhtnDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHTN)*BHTN_DN,0)`},
+ {L:'AI', k:'kpcd',   vi:'KPCĐ 2%', en:'Union 2%', g:'emp', w:80, emp:true,
+   get:(e,c)=>c.kpcd,   f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*KPCD,0)`},
+ {L:'AJ', k:'chiPhiDN', vi:'TỔNG CHI PHÍ DN', en:'Total employer cost', g:'emp', w:122, bold:true, emp:true,
+   get:(e,c)=>c.chiPhiDN, f:r=>`=S${r}+SUM(AF${r}:AI${r})`}
+];
+
+const COL_BY_KEY = Object.fromEntries(COLS.map(c => [c.k, c]));
+const LAST_COL   = COLS[COLS.length - 1].L;
+const FROZEN     = ['stt','id','ten'];
+
+/* Tiêu đề gộp (band) phía trên hàng tên cột. Ba cột đầu bị đóng băng khi cuộn
+   ngang nên phải là một band riêng thì header mới khớp cột. */
+const GROUP_BAND = {
+  allow:'Phụ cấp · Allowances',
+  work :'Ngày công & làm thêm · Days & overtime',
+  ins  :'Người lao động đóng 10,5% · Employee contributions',
+  tax  :'Thuế thu nhập cá nhân · Personal income tax',
+  emp  :'Doanh nghiệp đóng thêm 23,5% · Employer burden'
+};
+function bandOf(k){
+  if(FROZEN.includes(k)) return 'Nhân sự · Employee';
+  if(['chucVu','bp','npt','luongChinh'].includes(k)) return 'Hợp đồng lao động · Contract';
+  if(k === 'tongThuNhap') return 'Tổng thu nhập · Gross';
+  if(['tamUng','thucLinh'].includes(k)) return 'Thanh toán · Payment';
+  return GROUP_BAND[COL_BY_KEY[k].g] || '—';
+}
+
+const visCols = () => COLS.filter(c => c.g === 'id' || S.cols[c.g]);
+
+/** Giá trị của một cột cho một nhân viên (dùng chung cho giao diện và Excel). */
+function cellValue(col, e, c){
+  if(col.inp) return col.month ? e.thang[S.month][col.inp] : e[col.inp];
+  return col.get ? col.get(e, c) : '';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 6 · MÔ HÌNH SHEET
+   Sinh ra danh sách dòng kèm số dòng Excel — dùng chung cho render HTML và
+   cho bộ xuất .xlsx, nhờ vậy công thức trên web và trong file luôn khớp nhau.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function buildSheetModel(monthId, deptId){
+  const groups = deptId === 'ALL' ? DEPTS : DEPTS.filter(d => d.id === deptId);
+  const rows = [];
+  let r = FIRST_ROW;
+
+  for(const g of groups){
+    const list = S.emps.filter(e => e.bp === g.id);
+    if(!list.length) continue;
+    rows.push({ type:'group', dept:g, count:list.length, row:r++ });
+    const from = r;
+    for(const e of list) rows.push({ type:'emp', e, c:calc(e, monthId), row:r++ });
+    rows.push({ type:'subtotal', dept:g, from, to:r-1, row:r++ });
+  }
+  const empRows = rows.filter(x => x.type === 'emp').map(x => x.row);
+  const totalRow = r;
+  rows.push({ type:'total', from:FIRST_ROW, to:r-1, row:r++ });
+
+  return {
+    rows, totalRow,
+    month: MONTHS.find(m => m.id === monthId),
+    firstRow: FIRST_ROW,
+    lastRow: totalRow - 1,
+    empRows,
+    list: empsOf(deptId)
+  };
+}
+
+/** Công thức của một ô bất kỳ trong mô hình sheet (kể cả dòng cộng). */
+function formulaFor(model, rowObj, col){
+  if(rowObj.type === 'emp')      return col.f ? col.f(rowObj.row) : null;
+  if(rowObj.type === 'subtotal') return `=SUBTOTAL(9,${col.L}${rowObj.from}:${col.L}${rowObj.to})`;
+  if(rowObj.type === 'total')    return `=SUBTOTAL(9,${col.L}${rowObj.from}:${col.L}${rowObj.to})`;
+  return null;
+}
+
+/** Cột nào được cộng ở dòng tổng (không cộng STT, mã, ngày công chuẩn…). */
+const SUMMABLE = c => !['stt','id','ten','chucVu','bp','ncc'].includes(c.k);
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 7 · BỘ GHI FILE .XLSX  (tự viết, không cần thư viện ngoài)
+   ---------------------------------------------------------------------------
+   Sinh trực tiếp gói OOXML rồi đóng gói ZIP (phương thức store, không nén).
+   Mỗi ô có thể mang <f>công thức</f> nên khi mở bằng Excel / LibreOffice /
+   Google Sheets, công thức được giữ nguyên và tính lại (fullCalcOnLoad).
+   ---------------------------------------------------------------------------
+   Cách dùng:
+     buildXlsxBlob([{ name, cols, freeze, merges, rows }], definedNames)
+     rows[i]      → dòng Excel thứ (i+1)
+     rows[i][j]   → cột thứ (j+1); null = ô trống
+     ô  = { v: giá trị, f: 'SUM(A1:A2)' (không có dấu =), s: mã định dạng, t:'s'|'n' }
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- CRC32 --- */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for(let i = 0; i < 256; i++){
+    let c = i;
+    for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf){
+  let c = 0xFFFFFFFF;
+  for(let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* --- ZIP (store) --- */
+function zipStore(files){
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+
+  const u16 = n => [n & 255, (n >>> 8) & 255];
+  const u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  // 2026-01-01 00:00 theo định dạng DOS
+  const DOS_TIME = 0, DOS_DATE = ((2026 - 1980) << 9) | (1 << 5) | 1;
+
+  for(const f of files){
+    const nameBytes = enc.encode(f.name);
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+
+    const local = [
+      ...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0),
+      ...u16(DOS_TIME), ...u16(DOS_DATE),
+      ...u32(crc), ...u32(data.length), ...u32(data.length),
+      ...u16(nameBytes.length), ...u16(0)
+    ];
+    parts.push(new Uint8Array(local), nameBytes, data);
+
+    central.push({
+      crc, size:data.length, nameBytes, offset,
+      header:[
+        ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0),
+        ...u16(DOS_TIME), ...u16(DOS_DATE),
+        ...u32(crc), ...u32(data.length), ...u32(data.length),
+        ...u16(nameBytes.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+        ...u32(0), ...u32(offset)
+      ]
+    });
+    offset += local.length + nameBytes.length + data.length;
+  }
+
+  const cdStart = offset;
+  for(const c of central){
+    parts.push(new Uint8Array(c.header), c.nameBytes);
+    offset += c.header.length + c.nameBytes.length;
+  }
+  parts.push(new Uint8Array([
+    ...u32(0x06054b50), ...u16(0), ...u16(0),
+    ...u16(central.length), ...u16(central.length),
+    ...u32(offset - cdStart), ...u32(cdStart), ...u16(0)
+  ]));
+
+  const total = parts.reduce((a, p) => a + p.length, 0);
+  const out = new Uint8Array(total);
+  let p = 0;
+  for(const part of parts){ out.set(part, p); p += part.length; }
+  return out;
+}
+
+/* --- Tiện ích XML --- */
+const xesc = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;')
+  .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');   // loai ky tu dieu khien XML khong hop le
+
+/** Số cột (1-based) → chữ cái Excel. */
+function colLetter(n){
+  let s = '';
+  while(n > 0){ const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - 1 - m) / 26; }
+  return s;
+}
+/** Chữ cái Excel → số cột (1-based). */
+function colIndex(L){
+  let n = 0;
+  for(const ch of L) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
+/* --- Bảng mã định dạng ô: dùng hằng số ST.* cho dễ đọc --- */
+const ST = {
+  DEFAULT:0, TITLE:1, SUBTITLE:2, BAND:3, HEADER:4,
+  TEXT:5, TEXT_B:6, MONEY:7, MONEY_B:8, CENTER:9, CENTER_B:10,
+  GROUP:11, SUB_TEXT:12, SUB_MONEY:13, TOT_TEXT:14, TOT_MONEY:15,
+  MONEY_IN:16, CENTER_IN:17, PCT:18, LABEL:19, NOTE:20, MONEY_PLAIN:21
+};
+
+const STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0"/><numFmt numFmtId="165" formatCode="0.0%"/></numFmts>
+<fonts count="6">
+<font><sz val="10"/><color theme="1"/><name val="Calibri"/></font>
+<font><b/><sz val="10"/><color theme="1"/><name val="Calibri"/></font>
+<font><b/><sz val="14"/><color rgb="FF0E6B52"/><name val="Calibri"/></font>
+<font><i/><sz val="9"/><color rgb="FF767F79"/><name val="Calibri"/></font>
+<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><b/><sz val="10"/><color rgb="FF0A5240"/><name val="Calibri"/></font>
+</fonts>
+<fills count="7">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFDCEAE3"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFF1F3F0"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF0E6B52"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFDF2DF"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFCFE6DB"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="2">
+<border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left style="thin"><color rgb="FFB8C0BA"/></left><right style="thin"><color rgb="FFB8C0BA"/></right><top style="thin"><color rgb="FFB8C0BA"/></top><bottom style="thin"><color rgb="FFB8C0BA"/></bottom><diagonal/></border>
+</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="22">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="6" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="0" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+/** Sinh XML cho một worksheet. */
+function sheetXml(sheet){
+  const rowsXml = [];
+  let maxCol = 1;
+
+  sheet.rows.forEach((cells, i) => {
+    if(!cells || !cells.length) return;
+    const rn = i + 1, out = [];
+    cells.forEach((cell, j) => {
+      if(cell === null || cell === undefined || cell === '') return;
+      const ref = colLetter(j + 1) + rn;
+      maxCol = Math.max(maxCol, j + 1);
+      const c = (typeof cell === 'object' && cell !== null) ? cell : { v:cell };
+      const s = c.s ? ` s="${c.s}"` : '';
+      // Ô rỗng chỉ có định dạng: ghi thẻ trống để COUNTA/COUNTIF không đếm nhầm.
+      if((c.v === '' || c.v === null || c.v === undefined) && (c.f === undefined || c.f === null)){
+        if(c.s) out.push(`<c r="${ref}"${s}/>`);
+        return;
+      }
+      const isText = c.t === 's' || (c.t !== 'n' && typeof c.v === 'string' && c.f === undefined);
+
+      if(c.f !== undefined && c.f !== null){
+        const f = String(c.f).replace(/^=/, '');
+        const v = (typeof c.v === 'number' && isFinite(c.v)) ? `<v>${c.v}</v>` : '';
+        out.push(`<c r="${ref}"${s}><f>${xesc(f)}</f>${v}</c>`);
+      } else if(isText){
+        out.push(`<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xesc(c.v)}</t></is></c>`);
+      } else {
+        const v = Number(c.v);
+        out.push(`<c r="${ref}"${s}><v>${isFinite(v) ? v : 0}</v></c>`);
+      }
+    });
+    if(out.length) rowsXml.push(`<row r="${rn}">${out.join('')}</row>`);
+  });
+
+  const colsXml = sheet.cols && sheet.cols.length
+    ? `<cols>${sheet.cols.map((c, i) => `<col min="${i+1}" max="${i+1}" width="${c.w || 12}" customWidth="1"/>`).join('')}</cols>`
+    : '';
+  const fz = sheet.freeze
+    ? `<pane xSplit="${sheet.freeze.x||0}" ySplit="${sheet.freeze.y||0}" topLeftCell="${colLetter((sheet.freeze.x||0)+1)}${(sheet.freeze.y||0)+1}" activePane="bottomRight" state="frozen"/>`
+      + `<selection pane="bottomRight"/>`
+    : '';
+  const mg = sheet.merges && sheet.merges.length
+    ? `<mergeCells count="${sheet.merges.length}">${sheet.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`
+    : '';
+  const dim = `A1:${colLetter(maxCol)}${Math.max(sheet.rows.length, 1)}`;
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+    + `<dimension ref="${dim}"/>`
+    + `<sheetViews><sheetView workbookViewId="0"${sheet.active ? ' tabSelected="1"' : ''}>${fz}</sheetView></sheetViews>`
+    + `<sheetFormatPr defaultRowHeight="14.5"/>`
+    + colsXml
+    + `<sheetData>${rowsXml.join('')}</sheetData>`
+    + mg
+    + `<pageMargins left="0.3" right="0.3" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>`
+    + `<pageSetup orientation="${sheet.landscape ? 'landscape' : 'portrait'}" paperSize="9"/>`
+    + `</worksheet>`;
+}
+
+/**
+ * Đóng gói workbook.
+ * @param {Array}  sheets  danh sách sheet
+ * @param {Object} names   { TEN_HANG_SO: "ThamSo!$C$5", ... }
+ * @returns {Blob}
+ */
+function buildXlsxBlob(sheets, names){
+  const n = sheets.length;
+  const sheetRels = sheets.map((s, i) =>
+    `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
+
+  const definedNames = names && Object.keys(names).length
+    ? `<definedNames>${Object.entries(names)
+        .map(([k, v]) => `<definedName name="${xesc(k)}">${xesc(v)}</definedName>`).join('')}</definedNames>`
+    : '';
+
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>${sheets.map((s, i) => `<sheet name="${xesc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets>
+${definedNames}<calcPr calcId="0" fullCalcOnLoad="1"/></workbook>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+${sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  const files = [
+    { name:'[Content_Types].xml', data:contentTypes },
+    { name:'_rels/.rels', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>` },
+    { name:'xl/workbook.xml', data:workbook },
+    { name:'xl/_rels/workbook.xml.rels', data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+${sheetRels}<Relationship Id="rId${n+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>` },
+    { name:'xl/styles.xml', data:STYLES_XML }
+  ];
+  sheets.forEach((s, i) => files.push({ name:`xl/worksheets/sheet${i+1}.xml`, data:sheetXml(s) }));
+
+  return new Blob([zipStore(files)],
+    { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+/** Tải một Blob về máy người dùng. */
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 8 · XUẤT EXCEL  —  mọi ô tính toán đều mang công thức thật
+   ---------------------------------------------------------------------------
+   Workbook gồm:
+     ThamSo      hằng số pháp định + Defined Names (BHXH_NLD, TRAN_BHXH…)
+     BL_T06/07/08 bảng lương từng kỳ, công thức y hệt trên web
+     PhieuLuong  phiếu lương dùng INDEX/MATCH — đổi mã NV ở ô C4 là chạy lại
+     BaoCao      báo cáo toàn công ty + so sánh phòng ban bằng SUMIF/COUNTIF
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Vị trí từng hằng số trên sheet ThamSo (dòng 5 trở đi, giá trị ở cột C). */
+const CONST_ROW0 = 5;
+const DEFINED_NAMES = Object.fromEntries(
+  CONST_DOC.map(([name], i) => [name, `ThamSo!$C$${CONST_ROW0 + i}`])
+);
+
+/* ---------- Sheet ThamSo ---------- */
+function sheetThamSo(){
+  const rows = [];
+  const put = (r, arr) => { rows[r - 1] = arr; };
+
+  put(1, [{ v:'THAM SỐ TÍNH LƯƠNG — HẰNG SỐ PHÁP ĐỊNH 2026', s:ST.TITLE }]);
+  put(2, [{ v:'Các giá trị dưới đây được đặt Defined Name để công thức trong bảng lương gọi trực tiếp. '
+             + 'Sửa ở đây, toàn bộ workbook tính lại.', s:ST.SUBTITLE }]);
+  put(4, [{ v:'Mã (Defined Name)', s:ST.HEADER }, { v:'Diễn giải', s:ST.HEADER },
+          { v:'Giá trị', s:ST.HEADER }, { v:'Đơn vị', s:ST.HEADER }, { v:'English', s:ST.HEADER }]);
+
+  CONST_DOC.forEach(([name, vi, en, unit], i) => {
+    const v = K[name];
+    put(CONST_ROW0 + i, [
+      { v:name, s:ST.TEXT_B },
+      { v:vi,   s:ST.TEXT },
+      { v, s: unit === '%' ? ST.PCT : unit === 'đ' ? ST.MONEY : ST.CENTER },
+      { v:unit, s:ST.CENTER },
+      { v:en,   s:ST.TEXT }
+    ]);
+  });
+
+  const r = CONST_ROW0 + CONST_DOC.length + 1;
+  put(r,     [{ v:'BIỂU THUẾ TNCN LŨY TIẾN 5 BẬC (áp dụng từ 01/01/2026)', s:ST.TITLE }]);
+  put(r + 1, [{ v:'Bậc', s:ST.HEADER }, { v:'Thu nhập tính thuế / tháng', s:ST.HEADER },
+              { v:'Thuế suất', s:ST.HEADER }, { v:'Số trừ', s:ST.HEADER }, { v:'Công thức rút gọn', s:ST.HEADER }]);
+  const labels = ['Đến 10 triệu', 'Trên 10 – 30 triệu', 'Trên 30 – 60 triệu',
+                  'Trên 60 – 100 triệu', 'Trên 100 triệu'];
+  TAX_BANDS.forEach((b, i) => put(r + 2 + i, [
+    { v:i + 1, s:ST.CENTER }, { v:labels[i], s:ST.TEXT },
+    { v:b.rate, s:ST.PCT }, { v:b.sub, s:ST.MONEY },
+    { v:`${b.rate * 100}% × TNTT${b.sub ? ' − ' + b.sub.toLocaleString('vi-VN') : ''}`, s:ST.TEXT }
+  ]));
+
+  return {
+    name:'ThamSo', rows,
+    cols:[{ w:20 }, { w:44 }, { w:16 }, { w:8 }, { w:32 }],
+    merges:['A1:E1', 'A2:E2', `A${r}:E${r}`]
+  };
+}
+
+/* ---------- Sheet bảng lương của một kỳ ---------- */
+function sheetBangLuong(monthId, active){
+  const model = buildSheetModel(monthId, 'ALL');
+  const M = model.month;
+  const rows = [];
+  const put = (r, arr) => { rows[r - 1] = arr; };
+  const at = (arr, L, cell) => { arr[colIndex(L) - 1] = cell; };
+
+  /* Tiêu đề */
+  put(1, [{ v:COMPANY.ten, s:ST.TEXT_B }]);
+  put(2, [{ v:COMPANY.dc + ' · MST: ' + COMPANY.mst + ' · ' + COMPANY.vung, s:ST.SUBTITLE }]);
+  put(3, [{ v:`BẢNG THANH TOÁN TIỀN LƯƠNG — ${M.vi.toUpperCase()}`, s:ST.TITLE }]);
+  const r4 = [];
+  at(r4, 'A', { v:'Ngày công chuẩn của kỳ lương:', s:ST.TEXT_B });
+  at(r4, 'D', { v:M.ncc, s:ST.CENTER_IN });
+  at(r4, 'E', { v:'Đơn vị tính: VNĐ', s:ST.SUBTITLE });
+  put(4, r4);
+
+  /* Dòng 5 — tiêu đề gộp; dòng 6 — tên cột */
+  const band = [], head = [], merges = [];
+  let i = 0;
+  while(i < COLS.length){
+    const b = bandOf(COLS[i].k);
+    let n = 1;
+    while(i + n < COLS.length && bandOf(COLS[i + n].k) === b) n++;
+    band[colIndex(COLS[i].L) - 1] = { v:b, s:ST.BAND };
+    for(let j = 1; j < n; j++) band[colIndex(COLS[i + j].L) - 1] = { v:'', s:ST.BAND };
+    if(n > 1) merges.push(`${COLS[i].L}5:${COLS[i + n - 1].L}5`);
+    i += n;
+  }
+  COLS.forEach(c => { head[colIndex(c.L) - 1] = { v:`${c.vi}\n(${c.L})`, s:ST.HEADER }; });
+  put(HEAD_BAND, band);
+  put(HEAD_ROW, head);
+
+  /* Thân bảng */
+  for(const row of model.rows){
+    const arr = [];
+    if(row.type === 'group'){
+      COLS.forEach(c => { arr[colIndex(c.L) - 1] = { v:'', s:ST.GROUP }; });
+      at(arr, 'C', { v:`${row.dept.vi}  (${row.dept.en}) — ${row.count} nhân viên`, s:ST.GROUP });
+      merges.push(`C${row.row}:${LAST_COL}${row.row}`);
+    } else if(row.type === 'emp'){
+      COLS.forEach(c => {
+        const v = cellValue(c, row.e, row.c);
+        const f = c.f ? c.f(row.row).replace(/^=/, '') : null;
+        let s;
+        if(c.text)       s = ST.TEXT;
+        else if(c.plain) s = c.inp ? ST.CENTER_IN : ST.CENTER;
+        else if(c.inp)   s = ST.MONEY_IN;
+        else             s = c.bold ? ST.MONEY_B : ST.MONEY;
+        arr[colIndex(c.L) - 1] = f ? { v, f, s } : { v, s, t:c.text ? 's' : 'n' };
+      });
+      /* Cột M lấy ngày công chuẩn từ ô D4 để sửa một chỗ là cả cột đổi. */
+      at(arr, 'M', { v:row.c.ncc, f:'$D$4', s:ST.CENTER });
+    } else {
+      const isTot = row.type === 'total';
+      COLS.forEach(c => {
+        const st = c.text || c.plain
+          ? (isTot ? ST.TOT_TEXT : ST.SUB_TEXT)
+          : (isTot ? ST.TOT_MONEY : ST.SUB_MONEY);
+        if(!SUMMABLE(c)){ arr[colIndex(c.L) - 1] = { v:'', s:st }; return; }
+        const v = model.rows
+          .filter(x => x.type === 'emp' && x.row >= row.from && x.row <= row.to)
+          .reduce((a, x) => a + (Number(cellValue(c, x.e, x.c)) || 0), 0);
+        arr[colIndex(c.L) - 1] = { v, f:`SUBTOTAL(9,${c.L}${row.from}:${c.L}${row.to})`, s:st };
+      });
+      at(arr, 'C', { v: isTot ? 'TỔNG CỘNG TOÀN CÔNG TY' : `Cộng ${row.dept.vi}`,
+                     s: isTot ? ST.TOT_TEXT : ST.SUB_TEXT });
+      at(arr, 'D', { v: isTot ? `${model.list.length} nhân viên` : 'Subtotal',
+                     s: isTot ? ST.TOT_TEXT : ST.SUB_TEXT });
+    }
+    put(row.row, arr);
+  }
+
+  /* Chú thích cuối bảng + chữ ký */
+  const rEnd = model.totalRow + 2;
+  put(rEnd, [{ v:'Ghi chú: ô nền vàng là dữ liệu nhập tay; các ô còn lại là công thức. '
+               + 'Hằng số (BHXH_NLD, TRAN_BHXH, GTGC_BAN_THAN…) nằm ở sheet ThamSo.', s:ST.SUBTITLE }]);
+  const sig = [];
+  sig[colIndex('C') - 1] = { v:'Người lập biểu', s:ST.CENTER_B };
+  sig[colIndex('S') - 1] = { v:'Kế toán trưởng', s:ST.CENTER_B };
+  sig[colIndex('AE') - 1] = { v:'Giám đốc Công ty', s:ST.CENTER_B };
+  put(rEnd + 2, sig);
+  const sig2 = [];
+  sig2[colIndex('C') - 1] = { v:'(Ký, họ tên)', s:ST.SUBTITLE };
+  sig2[colIndex('S') - 1] = { v:'(Ký, họ tên)', s:ST.SUBTITLE };
+  sig2[colIndex('AE') - 1] = { v:'(Ký, họ tên, đóng dấu)', s:ST.SUBTITLE };
+  put(rEnd + 3, sig2);
+
+  return {
+    name:M.sheet, rows, merges, active, landscape:true,
+    cols:COLS.map(c => ({ w:Math.max(6, Math.round(c.w / 7)) })),
+    freeze:{ x:3, y:HEAD_ROW }
+  };
+}
+
+/* ---------- Sheet phiếu lương (INDEX/MATCH về bảng lương) ---------- */
+function sheetPhieuLuong(monthId, empId, sheetName){
+  const M = MONTHS.find(m => m.id === monthId);
+  const BL = M.sheet;
+  const rows = [];
+  const put = (r, arr) => { rows[r - 1] = arr; };
+  const lk = L => `INDEX(${BL}!$${L}:$${L},MATCH($C$4,${BL}!$B:$B,0))`;
+  const money = (label, L, indent) => {
+    const col = COLS.find(c => c.L === L);
+    return [
+      { v:(indent ? '    ' : '') + label, s:indent ? ST.TEXT : ST.TEXT_B },
+      null,
+      { v:'', f:lk(L), s:indent ? ST.MONEY : ST.MONEY_B },
+      { v:`lấy từ cột ${L} — ${col ? col.vi : ''}`, s:ST.SUBTITLE }
+    ];
+  };
+
+  put(1, [{ v:COMPANY.ten, s:ST.TEXT_B }]);
+  put(2, [{ v:`PHIẾU LƯƠNG — ${M.vi}`, s:ST.TITLE }]);
+  put(4, [{ v:'Mã nhân viên → sửa ô này:', s:ST.TEXT_B }, null, { v:empId, s:ST.CENTER_IN }]);
+  put(5, [{ v:'Họ và tên', s:ST.TEXT }, null, { v:'', f:lk('C'), s:ST.TEXT_B }]);
+  put(6, [{ v:'Chức vụ',   s:ST.TEXT }, null, { v:'', f:lk('D'), s:ST.TEXT }]);
+  put(7, [{ v:'Bộ phận',   s:ST.TEXT }, null, { v:'', f:lk('E'), s:ST.TEXT }]);
+  put(8, [{ v:'Ngày công / Ngày công chuẩn', s:ST.TEXT }, null,
+          { v:'', f:`${lk('N')}&"/"&${lk('M')}`, s:ST.CENTER }]);
+  put(9, [{ v:'Số người phụ thuộc', s:ST.TEXT }, null, { v:'', f:lk('F'), s:ST.CENTER }]);
+
+  let r = 11;
+  put(r++, [{ v:'A. THU NHẬP', s:ST.HEADER }, { v:'', s:ST.HEADER }, { v:'VNĐ', s:ST.HEADER }, { v:'Nguồn', s:ST.HEADER }]);
+  [['Lương chính','G'],['Phụ cấp trách nhiệm','H'],['Phụ cấp ăn trưa','I'],
+   ['Phụ cấp điện thoại','J'],['Phụ cấp xăng xe','K'],['Lương theo ngày công','O'],
+   ['Tiền làm thêm giờ','Q'],['Thưởng / hỗ trợ','R']]
+    .forEach(([lab, L]) => put(r++, money(lab, L, true)));
+  put(r++, money('TỔNG THU NHẬP (GROSS)', 'S'));
+
+  r++;
+  put(r++, [{ v:'B. NGƯỜI LAO ĐỘNG ĐÓNG', s:ST.HEADER }, { v:'', s:ST.HEADER }, { v:'VNĐ', s:ST.HEADER }, { v:'Nguồn', s:ST.HEADER }]);
+  [['Tiền lương đóng bảo hiểm','T'],['BHXH 8%','U'],['BHYT 1,5%','V'],['BHTN 1%','W']]
+    .forEach(([lab, L]) => put(r++, money(lab, L, true)));
+  put(r++, money('Cộng bảo hiểm (10,5%)', 'X'));
+
+  r++;
+  put(r++, [{ v:'C. THUẾ THU NHẬP CÁ NHÂN', s:ST.HEADER }, { v:'', s:ST.HEADER }, { v:'VNĐ', s:ST.HEADER }, { v:'Nguồn', s:ST.HEADER }]);
+  [['Thu nhập miễn thuế','Y'],['Thu nhập chịu thuế','Z'],['Tổng giảm trừ','AA'],
+   ['Thu nhập tính thuế','AB']].forEach(([lab, L]) => put(r++, money(lab, L, true)));
+  put(r++, money('Thuế TNCN phải nộp', 'AC'));
+
+  r++;
+  put(r++, [{ v:'D. THANH TOÁN', s:ST.HEADER }, { v:'', s:ST.HEADER }, { v:'VNĐ', s:ST.HEADER }, { v:'Nguồn', s:ST.HEADER }]);
+  put(r++, money('Tạm ứng đã nhận', 'AD', true));
+  put(r++, money('THỰC LĨNH', 'AE'));
+
+  r++;
+  put(r++, [{ v:'E. DOANH NGHIỆP ĐÓNG THÊM (không trừ vào lương)', s:ST.HEADER },
+            { v:'', s:ST.HEADER }, { v:'VNĐ', s:ST.HEADER }, { v:'Nguồn', s:ST.HEADER }]);
+  [['BHXH 17,5%','AF'],['BHYT 3%','AG'],['BHTN 1%','AH'],['Kinh phí công đoàn 2%','AI']]
+    .forEach(([lab, L]) => put(r++, money(lab, L, true)));
+  put(r++, money('TỔNG CHI PHÍ DOANH NGHIỆP', 'AJ'));
+
+  const rNet = r - 1;
+  r++;
+  put(r++, [{ v:'Tỷ lệ chi phí phụ trội trên lương gross', s:ST.TEXT }, null,
+            { v:'', f:`IFERROR(C${rNet}/${lk('S')}-1,0)`, s:ST.PCT }]);
+  put(r++, [{ v:'Người lao động nhận về trên tổng chi phí', s:ST.TEXT }, null,
+            { v:'', f:`IFERROR(${lk('AE')}/C${rNet},0)`, s:ST.PCT }]);
+
+  r += 2;
+  put(r, [{ v:'Người lập biểu', s:ST.CENTER_B }, null, { v:'Kế toán trưởng', s:ST.CENTER_B },
+          { v:'Giám đốc Công ty', s:ST.CENTER_B }]);
+
+  return { name:sheetName || 'PhieuLuong', rows, cols:[{ w:36 }, { w:3 }, { w:18 }, { w:40 }] };
+}
+
+/* ---------- Sheet báo cáo (toàn công ty + phòng ban) ---------- */
+function sheetBaoCao(monthId){
+  const rows = [];
+  const put = (r, arr) => { rows[r - 1] = arr; };
+  const merges = [];
+  const models = Object.fromEntries(MONTHS.map(m => [m.id, buildSheetModel(m.id, 'ALL')]));
+  const rng = (m, L) => { const md = models[m.id]; return `${m.sheet}!$${L}$${md.firstRow}:$${L}$${md.lastRow}`; };
+  const sub = (m, L) => `SUBTOTAL(9,${rng(m, L)})`;
+  const sif = (m, L, cellA) => `SUMIF(${rng(m, 'E')},${cellA},${rng(m, L)})`;
+
+  put(1, [{ v:'BÁO CÁO NHÂN SỰ & CHI PHÍ LAO ĐỘNG', s:ST.TITLE }]);
+  put(2, [{ v:COMPANY.ten + ' · Đơn vị tính: VNĐ · Mọi ô đều là công thức tham chiếu sang các sheet bảng lương', s:ST.SUBTITLE }]);
+  merges.push('A1:K1', 'A2:K2');
+
+  /* A. Toàn công ty theo kỳ lương */
+  put(4, [{ v:'A. TỔNG HỢP TOÀN CÔNG TY THEO KỲ LƯƠNG', s:ST.TEXT_B }]);
+  const hdA = ['Kỳ lương','Số người','Tổng ngày công','Tổng giờ OT','Quỹ lương gross',
+               'BH người LĐ đóng','Thuế TNCN','Tổng thực lĩnh','DN đóng BH + KPCĐ',
+               'Tổng chi phí DN','Chi phí BQ/người'];
+  put(5, hdA.map(v => ({ v, s:ST.HEADER })));
+  MONTHS.forEach((m, i) => {
+    const r = 6 + i, md = models[m.id];
+    put(r, [
+      { v:m.vi, s:ST.TEXT_B },
+      { v:'', f:`COUNTA(${rng(m, 'B')})`, s:ST.CENTER },
+      { v:'', f:sub(m, 'N'), s:ST.CENTER },
+      { v:'', f:sub(m, 'P'), s:ST.CENTER },
+      { v:'', f:sub(m, 'S'), s:ST.MONEY },
+      { v:'', f:sub(m, 'X'), s:ST.MONEY },
+      { v:'', f:sub(m, 'AC'), s:ST.MONEY },
+      { v:'', f:sub(m, 'AE'), s:ST.MONEY_B },
+      { v:'', f:`${sub(m, 'AF')}+${sub(m, 'AG')}+${sub(m, 'AH')}+${sub(m, 'AI')}`, s:ST.MONEY },
+      { v:'', f:sub(m, 'AJ'), s:ST.MONEY_B },
+      { v:'', f:`IFERROR(J${r}/B${r},0)`, s:ST.MONEY }
+    ]);
+  });
+
+  /* B. So sánh phòng ban — kỳ đang chọn */
+  const M = MONTHS.find(m => m.id === monthId);
+  const rB = 6 + MONTHS.length + 1;
+  put(rB, [{ v:`B. SO SÁNH PHÒNG BAN — ${M.vi}`, s:ST.TEXT_B }]);
+  const hdB = ['Mã BP','Phòng ban','Số người','Quỹ lương gross','BH người LĐ đóng','Thuế TNCN',
+               'Tổng thực lĩnh','DN đóng BH + KPCĐ','Tổng chi phí DN','Chi phí BQ/người','% tổng chi phí'];
+  put(rB + 1, hdB.map(v => ({ v, s:ST.HEADER })));
+  const rB0 = rB + 2, rBT = rB0 + DEPTS.length;
+  DEPTS.forEach((d, i) => {
+    const r = rB0 + i;
+    put(r, [
+      { v:d.id, s:ST.CENTER },
+      { v:d.vi, s:ST.TEXT },
+      { v:'', f:`COUNTIF(${rng(M, 'E')},$A${r})`, s:ST.CENTER },
+      { v:'', f:sif(M, 'S', `$A${r}`), s:ST.MONEY },
+      { v:'', f:sif(M, 'X', `$A${r}`), s:ST.MONEY },
+      { v:'', f:sif(M, 'AC', `$A${r}`), s:ST.MONEY },
+      { v:'', f:sif(M, 'AE', `$A${r}`), s:ST.MONEY_B },
+      { v:'', f:`${sif(M, 'AF', `$A${r}`)}+${sif(M, 'AG', `$A${r}`)}+${sif(M, 'AH', `$A${r}`)}+${sif(M, 'AI', `$A${r}`)}`, s:ST.MONEY },
+      { v:'', f:sif(M, 'AJ', `$A${r}`), s:ST.MONEY_B },
+      { v:'', f:`IFERROR(I${r}/C${r},0)`, s:ST.MONEY },
+      { v:'', f:`IFERROR(I${r}/I$${rBT},0)`, s:ST.PCT }
+    ]);
+  });
+  put(rBT, [
+    { v:'', s:ST.TOT_TEXT }, { v:'TỔNG CỘNG', s:ST.TOT_TEXT },
+    ...['C','D','E','F','G','H','I','J'].map(L =>
+      ({ v:'', f:`SUM(${L}${rB0}:${L}${rBT - 1})`, s:L === 'C' ? ST.TOT_TEXT : ST.TOT_MONEY })),
+    { v:1, f:`SUM(K${rB0}:K${rBT - 1})`, s:ST.PCT }
+  ]);
+
+  /* C. Phòng ban qua các kỳ lương */
+  const rC = rBT + 2;
+  put(rC, [{ v:'C. TỔNG CHI PHÍ DOANH NGHIỆP THEO PHÒNG BAN QUA CÁC KỲ LƯƠNG', s:ST.TEXT_B }]);
+  put(rC + 1, [{ v:'Mã BP', s:ST.HEADER }, { v:'Phòng ban', s:ST.HEADER },
+               ...MONTHS.map(m => ({ v:m.vi, s:ST.HEADER })),
+               { v:'Chênh lệch kỳ cuối', s:ST.HEADER }, { v:'% thay đổi', s:ST.HEADER }]);
+  const rC0 = rC + 2, nM = MONTHS.length;
+  const Lm = i => colLetter(3 + i);                  // C, D, E… cho từng kỳ lương
+  DEPTS.forEach((d, i) => {
+    const r = rC0 + i;
+    const last = Lm(nM - 1), prev = Lm(nM - 2);
+    put(r, [
+      { v:d.id, s:ST.CENTER }, { v:d.vi, s:ST.TEXT },
+      ...MONTHS.map(m => ({ v:'', f:sif(m, 'AJ', `$A${r}`), s:ST.MONEY })),
+      { v:'', f:`${last}${r}-${prev}${r}`, s:ST.MONEY },
+      { v:'', f:`IFERROR(${last}${r}/${prev}${r}-1,0)`, s:ST.PCT }
+    ]);
+  });
+  const rCT = rC0 + DEPTS.length;
+  put(rCT, [{ v:'', s:ST.TOT_TEXT }, { v:'TỔNG CỘNG', s:ST.TOT_TEXT },
+    ...MONTHS.map((m, i) => ({ v:'', f:`SUM(${Lm(i)}${rC0}:${Lm(i)}${rCT - 1})`, s:ST.TOT_MONEY })),
+    { v:'', f:`SUM(${Lm(nM)}${rC0}:${Lm(nM)}${rCT - 1})`, s:ST.TOT_MONEY },
+    { v:'', f:`IFERROR(${Lm(nM - 1)}${rCT}/${Lm(nM - 2)}${rCT}-1,0)`, s:ST.PCT }]);
+
+  put(rCT + 2, [{ v:'Lưu ý: báo cáo chỉ tổng hợp ở cấp công ty và phòng ban — không xếp hạng hay so sánh giữa các cá nhân.', s:ST.SUBTITLE }]);
+
+  return {
+    name:'BaoCao', rows, merges, landscape:true,
+    cols:[{ w:10 }, { w:28 }, { w:16 }, { w:16 }, { w:16 }, { w:18 }, { w:16 }, { w:18 }, { w:18 }, { w:16 }, { w:14 }]
+  };
+}
+
+/* ---------- Các hành động xuất ---------- */
+function exportWorkbook(){
+  const sheets = [
+    sheetThamSo(),
+    ...MONTHS.map(m => sheetBangLuong(m.id, m.id === S.month)),
+    sheetPhieuLuong(S.month, S.empSel),
+    sheetBaoCao(S.month)
+  ];
+  downloadBlob(buildXlsxBlob(sheets, DEFINED_NAMES),
+    `BangLuong_${COMPANY.ten.split(' ').slice(-2).join('')}_${S.month}.xlsx`);
+  toast('Đã tạo workbook: ThamSo · 3 kỳ bảng lương · PhieuLuong · BaoCao. Mọi ô tính toán đều giữ công thức.');
+}
+
+function exportPayslip(empId){
+  const e = S.emps.find(x => x.id === empId);
+  const sheets = [sheetThamSo(), sheetBangLuong(S.month, false), sheetPhieuLuong(S.month, empId)];
+  sheets[sheets.length - 1].active = true;
+  downloadBlob(buildXlsxBlob(sheets, DEFINED_NAMES), `PhieuLuong_${e.id}_${S.month}.xlsx`);
+  toast(`Đã xuất phiếu lương ${e.ten}. Đổi mã NV ở ô C4 của sheet PhieuLuong để xem người khác.`);
+}
+
+function exportDeptPayslips(bp){
+  const list = S.emps.filter(x => x.bp === bp);
+  const sheets = [sheetThamSo(), sheetBangLuong(S.month, false)];
+  list.forEach(e => sheets.push(sheetPhieuLuong(S.month, e.id, 'PL_' + e.id)));
+  downloadBlob(buildXlsxBlob(sheets, DEFINED_NAMES), `PhieuLuong_${bp}_${S.month}.xlsx`);
+  toast(`Đã xuất ${list.length} phiếu lương của ${deptName(bp)} — mỗi người một sheet.`);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 9 · TIỆN ÍCH GIAO DIỆN
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const nf = new Intl.NumberFormat('vi-VN');
+const fm  = n => (Math.round(n) === 0 ? '–' : nf.format(Math.round(n)));
+const fmM = n => (n / 1e6).toFixed(Math.abs(n) >= 100e6 ? 0 : 1).replace('.', ',') + ' tr';
+const pct = (n, d = 1) => (n * 100).toFixed(d).replace('.', ',') + '%';
+const esc = s => String(s).replace(/[&<>"]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+const monthObj = () => MONTHS.find(m => m.id === S.month);
+const monthIdx = id => MONTHS.findIndex(m => m.id === id);
+const prevMonth = id => (monthIdx(id) > 0 ? MONTHS[monthIdx(id) - 1] : null);
+const deptName = id => (DEPTS.find(d => d.id === id) || {}).vi || 'Toàn công ty';
+const SERIES = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
+const deptColor = id => SERIES[DEPTS.findIndex(d => d.id === id) % SERIES.length];
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.style.display = 'none'; }, 6500);
+}
+
+/** Đọc số tiền thành chữ (tiếng Việt). */
+function docNum(n){
+  const d = ['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín'];
+  const g3 = (x, full) => {
+    const t = Math.floor(x / 100), c = Math.floor(x % 100 / 10), u = x % 10;
+    let s = '';
+    if(full || t > 0) s += d[t] + ' trăm ';
+    if(c === 0){ if(u > 0) s += (t > 0 || full ? 'lẻ ' : '') + d[u]; }
+    else if(c === 1){ s += 'mười ' + (u === 0 ? '' : u === 5 ? 'lăm' : d[u]); }
+    else { s += d[c] + ' mươi ' + (u === 0 ? '' : u === 1 ? 'mốt' : u === 5 ? 'lăm' : d[u]); }
+    return s.trim();
+  };
+  n = Math.round(n);
+  if(n === 0) return 'Không đồng';
+  const units = ['', ' nghìn', ' triệu', ' tỷ'], parts = [];
+  let i = 0;
+  while(n > 0){ parts.unshift([n % 1000, i]); n = Math.floor(n / 1000); i++; }
+  const s = parts.map(([v, k], idx) => v === 0 ? '' : (g3(v, idx > 0) + units[k])).filter(Boolean).join(' ');
+  return s.charAt(0).toUpperCase() + s.slice(1) + ' đồng';
+}
+
+/** Thẻ chỉ số. */
+function tile(label, en, value, prev, cls, unit, fmtFn){
+  let d = '';
+  if(prev){
+    const p = (value - prev) / prev * 100;
+    d = `<span class="delta ${p >= 0 ? 'up' : 'dn'}">${p >= 0 ? '▲' : '▼'} ${Math.abs(p).toFixed(1).replace('.', ',')}%</span>`
+      + `<span style="color:var(--ink-3)">so với kỳ trước</span>`;
+  }
+  const shown = fmtFn ? fmtFn(value) : fm(value);
+  return `<div class="tile ${cls || ''}"><div class="k">${label}<i>${en}</i></div>`
+       + `<div class="v num">${shown}</div>`
+       + `<div class="sub">${d || `<span style="color:var(--ink-3)">${unit || 'đồng'}</span>`}</div></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 10 · TAB BẢNG LƯƠNG
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderSheet(){
+  const cols  = visCols();
+  const model = buildSheetModel(S.month, S.dept);
+  const M     = model.month;
+  let html = '';
+
+  /* --- thead: 3 dòng (band / tên cột / chữ cái Excel) --- */
+  html += '<thead><tr class="band">';
+  let i = 0;
+  while(i < cols.length){
+    const b = bandOf(cols[i].k);
+    let n = 1;
+    while(i + n < cols.length && bandOf(cols[i + n].k) === b) n++;
+    const frozen = FROZEN.includes(cols[i].k);
+    html += `<th colspan="${n}"${frozen ? ' class="stick" style="left:0"' : ''}>${esc(b)}</th>`;
+    i += n;
+  }
+  html += '</tr><tr class="head">';
+  let left = 0;
+  cols.forEach(c => {
+    const st = FROZEN.includes(c.k);
+    const style = `min-width:${c.w}px;width:${c.w}px;` + (st ? `left:${left}px;` : '');
+    if(st) left += c.w;
+    html += `<th class="${st ? 'stick' : ''}" style="${style}">${esc(c.vi)}<i>${esc(c.en)}</i></th>`;
+  });
+  html += '</tr><tr class="abc">';
+  left = 0;
+  cols.forEach(c => {
+    const st = FROZEN.includes(c.k);
+    const style = st ? `left:${left}px;` : '';
+    if(st) left += c.w;
+    html += `<th class="${st ? 'stick' : ''}" style="${style}">${c.L}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  /* --- tbody --- */
+  for(const row of model.rows){
+    if(row.type === 'group'){
+      html += `<tr class="grp"><td class="txt stick" style="left:0" colspan="3">${esc(row.dept.vi)}</td>`
+            + `<td class="txt" colspan="${Math.max(1, cols.length - 3)}">${esc(row.dept.en)} · ${row.count} nhân viên</td></tr>`;
+      continue;
+    }
+    const isEmp = row.type === 'emp';
+    const isTot = row.type === 'total';
+    html += `<tr class="${isEmp ? 'emp' : isTot ? 'tot' : 'sub'}"${isEmp ? ` data-emp="${row.e.id}"` : ''}>`;
+    let l = 0;
+    cols.forEach(col => {
+      const st  = FROZEN.includes(col.k);
+      const sty = (st ? `left:${l}px;` : '') + (col.bold ? 'font-weight:600;' : '');
+      if(st) l += col.w;
+      const cls = [st ? 'stick' : '', col.t || '', isEmp ? (col.inp ? 'inp' : 'calc') : '',
+                   col.neg ? 'neg' : '', col.emp ? 'emp-cost' : ''].filter(Boolean).join(' ');
+      let inner = '';
+
+      if(isEmp){
+        if(col.inp){
+          const v = cellValue(col, row.e, row.c);
+          inner = `<input class="cin num" type="text" inputmode="numeric" value="${nf.format(v)}"`
+                + ` data-emp="${row.e.id}" data-k="${col.inp}" data-m="${col.month ? 1 : 0}"`
+                + ` aria-label="${esc(col.vi)} — ${esc(row.e.ten)}">`;
+        } else {
+          const v = cellValue(col, row.e, row.c);
+          inner = typeof v === 'number'
+            ? `<span class="num">${col.plain ? v : fm(v)}</span>`
+            : esc(v);
+        }
+      } else {
+        if(col.k === 'ten') inner = isTot ? 'TỔNG CỘNG' : `Cộng ${esc(row.dept.vi)}`;
+        else if(col.k === 'chucVu') inner = isTot
+          ? `<i class="en" style="font-size:11px">Grand total · ${model.list.length} người</i>`
+          : '<i class="en" style="font-size:11px">Subtotal</i>';
+        else if(SUMMABLE(col)){
+          const sum = model.rows
+            .filter(x => x.type === 'emp' && x.row >= row.from && x.row <= row.to)
+            .reduce((a, x) => a + (Number(cellValue(col, x.e, x.c)) || 0), 0);
+          inner = `<span class="num">${col.plain ? sum : fm(sum)}</span>`;
+        }
+      }
+      html += `<td class="${cls}" style="${sty}" data-cell="${col.L}${row.row}" data-col="${col.k}"`
+            + ` data-kind="${row.type}"${row.from ? ` data-from="${row.from}" data-to="${row.to}"` : ''}>${inner}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  $('#sheet').innerHTML = html;
+
+  $('#sheetMeta').textContent =
+    `${M.vi} · ngày công chuẩn ${M.ncc} · ${deptName(S.dept)} · ${model.list.length} nhân sự · đơn vị: VNĐ`;
+
+  /* --- thẻ chỉ số --- */
+  const all = empsOf(S.dept);
+  const gt  = totals(all, S.month);
+  const pm  = prevMonth(S.month);
+  const pt  = pm ? totals(all, pm.id) : null;
+  $('#sheetTiles').innerHTML = [
+    tile('Quỹ lương (gross)',    'Total gross pay',        gt.tongThuNhap, pt && pt.tongThuNhap),
+    tile('Tổng thực lĩnh',       'Total net pay',          gt.thucLinh,    pt && pt.thucLinh),
+    tile('Thuế TNCN khấu trừ',   'PIT withheld',           gt.thueTNCN,    pt && pt.thueTNCN, 'd'),
+    tile('DN đóng BH + KPCĐ',    'Employer contributions', gt.bhDN,        pt && pt.bhDN,     'e'),
+    tile('Tổng chi phí lao động','Total employer cost',    gt.chiPhiDN,    pt && pt.chiPhiDN, 'e')
+  ].join('');
+
+  applySelection();
+}
+
+/* --- Thanh công thức --- */
+function applySelection(){
+  $$('#sheet td.sel').forEach(td => td.classList.remove('sel'));
+  if(!S.sel) return;
+  const td = $(`#sheet td[data-cell="${S.sel}"]`);
+  if(!td) return;
+  td.classList.add('sel');
+
+  const col  = COL_BY_KEY[td.dataset.col];
+  const rowN = parseInt(S.sel.replace(/^[A-Z]+/, ''), 10);
+  let kind = 'input', body = '(ô văn bản — không có công thức)';
+
+  if(td.dataset.kind === 'emp' && col.f){ kind = 'calc'; body = col.f(rowN); }
+  else if((td.dataset.kind === 'subtotal' || td.dataset.kind === 'total') && SUMMABLE(col)){
+    kind = 'calc'; body = `=SUBTOTAL(9,${col.L}${td.dataset.from}:${col.L}${td.dataset.to})`;
+  } else if(td.dataset.kind === 'emp' && col.inp){
+    const input = td.querySelector('input');
+    kind = 'input';
+    body = `(ô nhập tay — sửa trực tiếp)   ·   giá trị hiện tại: ${input ? input.value : ''}`;
+  }
+
+  $('#fRef').textContent = S.sel;
+  $('#fBody').innerHTML = `<span class="pill ${kind}">${kind === 'calc' ? 'công thức' : 'nhập tay'}</span>`
+                        + `<span>${esc(body)}</span>`;
+}
+
+/* --- Tương tác ô --- */
+document.addEventListener('click', ev => {
+  const td = ev.target.closest('#sheet td[data-cell]');
+  if(td){ S.sel = td.dataset.cell; applySelection(); }
+});
+document.addEventListener('focusin', ev => {
+  const td = ev.target.closest('#sheet td[data-cell]');
+  if(td){ S.sel = td.dataset.cell; applySelection(); }
+});
+
+let pendingFocus = null;
+document.addEventListener('change', ev => {
+  const inp = ev.target.closest('#sheet input.cin');
+  if(!inp) return;
+  const e = S.emps.find(x => x.id === inp.dataset.emp);
+  if(!e) return;
+
+  let v = Number(String(inp.value).replace(/[^\d]/g, ''));
+  if(!isFinite(v) || v < 0) v = 0;
+  if(inp.dataset.k === 'ngayCong') v = Math.min(v, 31);
+  if(inp.dataset.k === 'npt')      v = Math.min(v, 20);
+
+  if(inp.dataset.m === '1') e.thang[S.month][inp.dataset.k] = v;
+  else                      e[inp.dataset.k] = v;
+
+  const here = { emp:inp.dataset.emp, k:inp.dataset.k };
+  persist();
+  renderAll();
+
+  const target = pendingFocus || here;
+  pendingFocus = null;
+  const back = $(`#sheet input.cin[data-emp="${target.emp}"][data-k="${target.k}"]`);
+  if(back){ back.focus(); if(back.select) back.select(); }
+});
+document.addEventListener('keydown', ev => {
+  const inp = ev.target.closest('#sheet input.cin');
+  if(!inp) return;
+  if(ev.key !== 'Enter' && ev.key !== 'ArrowDown' && ev.key !== 'ArrowUp') return;
+  ev.preventDefault();
+  const same = $$(`#sheet input.cin[data-k="${inp.dataset.k}"]`);
+  const j = same.indexOf(inp);
+  const nx = same[j + (ev.key === 'ArrowUp' ? -1 : 1)];
+  if(nx) pendingFocus = { emp:nx.dataset.emp, k:nx.dataset.k };
+  inp.blur();     // nếu giá trị đổi → change → vẽ lại → focus ô kế
+  if(pendingFocus && nx && document.contains(nx)){
+    nx.focus(); if(nx.select) nx.select(); pendingFocus = null;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 11 · TAB PHIẾU LƯƠNG
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderSlip(){
+  const e = S.emps.find(x => x.id === S.empSel) || S.emps[0];
+  S.empSel = e.id;
+  const c = calc(e, S.month), M = monthObj();
+  const row = (a, b, cls = '', fx = '') =>
+    `<tr class="${cls}"><td>${a}${fx ? `<span class="fx">${esc(fx)}</span>` : ''}</td><td>${b}</td></tr>`;
+
+  $('#slipBox').innerHTML = `<div class="slip">
+    <div class="slip-hd">
+      <div class="co">${esc(COMPANY.ten)}
+        <small>${esc(COMPANY.dc)}<br>MST: ${esc(COMPANY.mst)} · ${esc(COMPANY.vung)}</small></div>
+      <div class="ttl"><h2>Phiếu lương</h2>
+        <div>Payslip · ${M.vi} (${M.en})</div>
+        <div style="font-size:11px;color:var(--ink-3)">Số: PL/${M.id.replace('-', '')}/${e.id}</div></div>
+    </div>
+    <div class="slip-who">
+      <div><b>Họ và tên:</b> <strong>${esc(e.ten)}</strong></div>
+      <div><b>Mã NV:</b> ${esc(e.id)}</div>
+      <div><b>Chức vụ:</b> ${esc(e.chucVu)}</div>
+      <div><b>Bộ phận:</b> ${esc(deptName(e.bp))}</div>
+      <div><b>Ngày công:</b> ${c.nc}/${c.ncc} · OT ${c.otGio}h</div>
+      <div><b>Người phụ thuộc:</b> ${e.npt}</div>
+    </div>
+    <table>
+      ${row('<b>A. THU NHẬP</b> <span class="en">Earnings</span>', '<b>VNĐ</b>', 'sect')}
+      ${row('Lương chính (theo hợp đồng)', fm(e.luongChinh), 'ind')}
+      ${row('Phụ cấp trách nhiệm', fm(e.pcTrachNhiem), 'ind')}
+      ${row('Phụ cấp ăn trưa', fm(e.pcAnTrua), 'ind')}
+      ${row('Phụ cấp điện thoại', fm(e.pcDienThoai), 'ind')}
+      ${row('Phụ cấp xăng xe', fm(e.pcXangXe), 'ind')}
+      ${row(`Lương &amp; phụ cấp theo ngày công (${c.nc}/${c.ncc})`, fm(c.luongTheoCong), '',
+            `=ROUND((Lương chính + Tổng phụ cấp)/${c.ncc}*${c.nc},0)`)}
+      ${row(`Tiền làm thêm giờ (${c.otGio}h × ${K.HS_OT * 100}%)`, fm(c.tienOT), '',
+            `=ROUND(G/(M*8)*P*HS_OT,0)  →  ROUND(${nf.format(e.luongChinh)}/(${c.ncc}*8)*${c.otGio}*${String(K.HS_OT).replace('.', ',')},0)`)}
+      ${row('Thưởng / hỗ trợ khác', fm(c.thuong))}
+      ${row('<b>TỔNG THU NHẬP (GROSS)</b>', `<b>${fm(c.tongThuNhap)}</b>`, 'tt')}
+
+      ${row('<b>B. CÁC KHOẢN NGƯỜI LAO ĐỘNG ĐÓNG</b> <span class="en">Employee deductions</span>', '', 'sect')}
+      ${row(`Tiền lương đóng bảo hiểm${c.capped ? ' <i style="color:var(--debit)">(đã áp trần)</i>' : ''}`,
+            fm(c.canCuXHYT), 'ind',
+            c.capped ? `=MIN(${nf.format(e.luongBH)}, TRAN_BHXH = ${nf.format(K.TRAN_BHXH)})` : '')}
+      ${row('BHXH 8%',   fm(-c.bhxhNLD), 'ind neg')}
+      ${row('BHYT 1,5%', fm(-c.bhytNLD), 'ind neg')}
+      ${row('BHTN 1%',   fm(-c.bhtnNLD), 'ind neg')}
+      ${row('<b>Cộng bảo hiểm (10,5%)</b>', `<b>${fm(-c.bhNLD)}</b>`, 'tt neg')}
+
+      ${row('<b>C. THUẾ THU NHẬP CÁ NHÂN</b> <span class="en">Personal income tax</span>', '', 'sect')}
+      ${row('Thu nhập miễn thuế (ăn ca, khoán điện thoại, phần vượt OT)', fm(c.tongMien), 'ind')}
+      ${row('Thu nhập chịu thuế', fm(c.tnChiuThue), 'ind')}
+      ${row('Giảm trừ bản thân', fm(K.GTGC_BAN_THAN), 'ind')}
+      ${row(`Giảm trừ ${e.npt} người phụ thuộc`, fm(K.GTGC_NPT * e.npt), 'ind')}
+      ${row('Bảo hiểm bắt buộc được trừ', fm(c.bhNLD), 'ind')}
+      ${row('<b>Thu nhập tính thuế</b>', `<b>${fm(c.tntt)}</b>`, 'tt',
+            '=MAX(Thu nhập chịu thuế − Tổng giảm trừ, 0)')}
+      ${row('Thuế TNCN phải nộp', fm(-c.thueTNCN), 'neg', bandNote(c.tntt))}
+
+      ${row('<b>D. KHOẢN KHÁC</b>', '', 'sect')}
+      ${row('Tạm ứng đã nhận', fm(-c.tamUng), 'ind neg')}
+      ${row('<b>THỰC LĨNH</b> <span class="en">Net pay</span>', `<b>${fm(c.thucLinh)}</b>`, 'big')}
+    </table>
+    <div class="words">Bằng chữ: ${docNum(c.thucLinh)}.</div>
+
+    <table style="margin-top:18px">
+      ${row('<b>E. CHI PHÍ DOANH NGHIỆP ĐÓNG THÊM</b> <span class="en">Employer contributions — not deducted from you</span>', '', 'sect')}
+      ${row('BHXH 17,5% (14% hưu trí–tử tuất + 3% ốm đau–thai sản + 0,5% TNLĐ–BNN)', fm(c.bhxhDN), 'ind')}
+      ${row('BHYT 3%', fm(c.bhytDN), 'ind')}
+      ${row('BHTN 1%', fm(c.bhtnDN), 'ind')}
+      ${row('Kinh phí công đoàn 2%', fm(c.kpcd), 'ind')}
+      ${row('<b>Cộng doanh nghiệp đóng (23,5%)</b>', `<b>${fm(c.bhDN)}</b>`, 'tt')}
+      ${row('<b>TỔNG CHI PHÍ CHO NHÂN SỰ NÀY</b>', `<b>${fm(c.chiPhiDN)}</b>`, 'big')}
+    </table>
+    <div class="note" style="margin-top:8px">
+      Tỷ lệ chi phí phụ trội: <b>${pct(c.chiPhiDN / c.tongThuNhap - 1)}</b> trên lương gross ·
+      Người lao động nhận về <b>${pct(c.thucLinh / c.chiPhiDN)}</b> tổng chi phí doanh nghiệp bỏ ra.
+    </div>
+
+    <div class="sigs">
+      <div><b>Người lập biểu</b><i>(Ký, họ tên)</i><span></span></div>
+      <div><b>Kế toán trưởng</b><i>(Ký, họ tên)</i><span></span></div>
+      <div><b>Giám đốc</b><i>(Ký, họ tên, đóng dấu)</i><span></span></div>
+    </div>
+  </div>`;
+}
+
+function bandNote(tntt){
+  if(!(tntt > 0)) return 'Không phát sinh thuế';
+  const i = TAX_BANDS.findIndex(b => tntt <= b.upto);
+  const b = TAX_BANDS[i];
+  return `Bậc ${i + 1}: = ${b.rate * 100}% × TNTT${b.sub ? ' − ' + nf.format(b.sub) : ''}`;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 12 · BIỂU ĐỒ SVG  (tự vẽ, không dùng thư viện)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const tipEl = () => $('#tip');
+
+function showTip(html, x, y){
+  const t = tipEl();
+  t.innerHTML = html;
+  t.classList.add('on');
+  const b = t.getBoundingClientRect();
+  let l = x + 14, top = y - b.height / 2;
+  if(l + b.width > window.innerWidth - 10) l = x - b.width - 14;
+  t.style.left = Math.max(6, l) + 'px';
+  t.style.top  = Math.max(6, Math.min(top, window.innerHeight - b.height - 6)) + 'px';
+}
+function hideTip(){ tipEl().classList.remove('on'); }
+
+document.addEventListener('mouseover', ev => {
+  const el = ev.target.closest('[data-tip]');
+  if(!el) return;
+  const [a, b, c, d] = el.dataset.tip.split('|');
+  showTip(`<div class="th">${esc(a)}</div><div class="tr"><span>${esc(b)}</span><b>${esc(c)}</b></div>`
+        + (d ? `<div class="tr"><span>tỷ trọng</span><b>${esc(d)}</b></div>` : ''),
+          ev.clientX, ev.clientY);
+  el.style.filter = 'brightness(1.12)';
+});
+document.addEventListener('mouseout', ev => {
+  const el = ev.target.closest('[data-tip]');
+  if(el){ el.style.filter = ''; hideTip(); }
+});
+
+/** Thanh ngang xếp chồng — cơ cấu chi phí. */
+function hStack(rows, colors, names){
+  const W = 580, rowH = 46, padL = 150, padR = 58, top = 8;
+  const H = top + rows.length * rowH + 10;
+  const max = Math.max(...rows.map(r => r.total), 1);
+  const sx = v => v / max * (W - padL - padR);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cơ cấu chi phí theo phòng ban">`;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    s += `<text x="${padL - 8}" y="${y + 16}" text-anchor="end" font-size="11.5" font-weight="600" fill="var(--ink)">${esc(r.label)}</text>`;
+    s += `<text x="${padL - 8}" y="${y + 29}" text-anchor="end" font-size="10" fill="var(--ink-3)">${esc(r.sub || '')}</text>`;
+    let x = padL;
+    r.vals.forEach((v, k) => {
+      const w = sx(v);
+      if(w <= 0) return;
+      s += `<rect x="${x}" y="${y + 6}" width="${Math.max(0, w - 2)}" height="18" rx="2" fill="${colors[k]}"`
+         + ` data-tip="${esc(r.label)}|${esc(names[k])}|${fm(v)}|${pct(v / r.total)}"></rect>`;
+      if(w > 52) s += `<text x="${x + w / 2 - 1}" y="${y + 19}" text-anchor="middle" font-size="9.5"`
+                    + ` font-weight="600" fill="#fff" pointer-events="none">${Math.round(v / r.total * 100)}%</text>`;
+      x += w;
+    });
+    s += `<text x="${x + 6}" y="${y + 20}" font-size="11" font-weight="600" fill="var(--ink-2)">${fmM(r.total)}</text>`;
+  });
+  return s + '</svg>';
+}
+
+/** Thanh ngang đơn sắc. */
+function hBars(rows, caption){
+  const W = 620, rowH = 38, padL = 150, padR = 74, top = 10;
+  const H = top + rows.length * rowH + 6;
+  const max = Math.max(...rows.map(r => r.val), 1);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(caption)}">`;
+  for(let g = 0; g <= 4; g++){
+    const x = padL + (W - padL - padR) * g / 4;
+    s += `<line x1="${x}" y1="${top - 2}" x2="${x}" y2="${H - 4}" stroke="var(--grid)"/>`;
+    s += `<text x="${x}" y="${H + 9}" text-anchor="middle" font-size="9.5" fill="var(--ink-3)">${fmM(max * g / 4)}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const y = top + i * rowH, w = r.val / max * (W - padL - padR);
+    s += `<text x="${padL - 8}" y="${y + 16}" text-anchor="end" font-size="11.5" font-weight="600" fill="var(--ink)">${esc(r.label)}</text>`;
+    if(r.sub) s += `<text x="${padL - 8}" y="${y + 29}" text-anchor="end" font-size="10" fill="var(--ink-3)">${esc(r.sub)}</text>`;
+    s += `<rect x="${padL}" y="${y + 2}" width="${Math.max(1, w)}" height="18" rx="2" fill="${r.color || 'var(--accent)'}"`
+       + ` data-tip="${esc(r.label)}|${esc(caption)}|${fm(r.val)}|"></rect>`;
+    s += `<text x="${padL + w + 6}" y="${y + 17}" font-size="11" font-weight="600" fill="var(--ink-2)">${fmM(r.val)}</text>`;
+  });
+  return `<div style="padding-bottom:14px">${s}</svg></div>`;
+}
+
+/**
+ * Cột nhóm hoặc cột xếp chồng.
+ * groups: [{label, sub, vals:[…]}]  ·  mode: 'grouped' | 'stacked'
+ */
+function cols(groups, colors, names, opt){
+  const o = Object.assign({ W:680, H:250, mode:'grouped', activeIdx:-1, label:'Biểu đồ cột' }, opt || {});
+  const { W, H } = o, padL = 64, padR = 12, padT = 14, padB = 44;
+  const stacked = o.mode === 'stacked';
+  const totalsArr = groups.map(g => g.vals.reduce((a, b) => a + b, 0));
+  const max = (stacked ? Math.max(...totalsArr) : Math.max(...groups.flatMap(g => g.vals))) * 1.08 || 1;
+  const gw = (W - padL - padR) / groups.length;
+  const bw = stacked ? Math.min(56, gw - 26) : Math.min(38, (gw - 24) / colors.length);
+  const sy = v => padT + (H - padT - padB) * (1 - v / max);
+
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label)}">`;
+  for(let g = 0; g <= 4; g++){
+    const v = max * g / 4, y = sy(v);
+    s += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--grid)"/>`;
+    s += `<text x="${padL - 8}" y="${y + 3.5}" text-anchor="end" font-size="10" fill="var(--ink-3)">${fmM(v)}</text>`;
+  }
+  s += `<line x1="${padL}" y1="${sy(0)}" x2="${W - padR}" y2="${sy(0)}" stroke="var(--axis)" stroke-width="1.5"/>`;
+
+  groups.forEach((g, i) => {
+    const cx = padL + gw * i + gw / 2;
+    const on = i === o.activeIdx;
+    if(on) s += `<rect x="${padL + gw * i + 3}" y="${padT - 8}" width="${gw - 6}" height="${H - padT - padB + 14}" rx="5" fill="var(--sel-wash)"/>`;
+    if(stacked){
+      let acc = 0;
+      g.vals.forEach((v, k) => {
+        const y0 = sy(acc), y1 = sy(acc + v);
+        s += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1 - 2)}" rx="2" fill="${colors[k]}"`
+           + ` data-tip="${esc(g.label)}|${esc(names[k])}|${fm(v)}|${pct(v / (totalsArr[i] || 1))}"></rect>`;
+        acc += v;
+      });
+      s += `<text x="${cx}" y="${sy(totalsArr[i]) - 6}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink-2)">${fmM(totalsArr[i])}</text>`;
+    } else {
+      g.vals.forEach((v, k) => {
+        const x = cx - (colors.length * bw + (colors.length - 1) * 3) / 2 + k * (bw + 3);
+        s += `<rect x="${x}" y="${sy(v)}" width="${bw}" height="${Math.max(1, sy(0) - sy(v))}" rx="2" fill="${colors[k]}"`
+           + ` data-tip="${esc(g.label)}|${esc(names[k])}|${fm(v)}|"></rect>`;
+      });
+    }
+    s += `<text x="${cx}" y="${H - 24}" text-anchor="middle" font-size="11.5" font-weight="${on ? 700 : 500}" fill="var(--ink${on ? '' : '-2'})">${esc(g.label)}</text>`;
+    if(g.sub) s += `<text x="${cx}" y="${H - 11}" text-anchor="middle" font-size="10" fill="var(--ink-3)">${esc(g.sub)}</text>`;
+  });
+  return s + '</svg>';
+}
+
+const legendHtml = items => items.map(it =>
+  `<span><i class="legend-dot" style="background:${it.c}"></i>${esc(it.vi)}${it.en ? ` <i class="en">${esc(it.en)}</i>` : ''}</span>`).join('');
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 13 · TAB PHÒNG BAN
+   Chỉ tổng hợp ở cấp phòng ban — không xếp hạng cá nhân.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const COMPO = [
+  { vi:'Về tay người lao động', en:'Take-home + advance',  c:'var(--s1)', f:t => t.thucLinh + t.tamUng },
+  { vi:'Thuế TNCN',             en:'PIT',                  c:'var(--s2)', f:t => t.thueTNCN },
+  { vi:'BH người LĐ đóng',      en:'Employee SI',          c:'var(--s3)', f:t => t.bhNLD },
+  { vi:'BH + KPCĐ doanh nghiệp',en:'Employer SI + union',  c:'var(--s4)', f:t => t.bhDN }
+];
+
+function deptStats(monthId){
+  return DEPTS.map(d => {
+    const list = S.emps.filter(e => e.bp === d.id);
+    return { ...d, list, ...totals(list, monthId) };
+  }).filter(d => d.list.length);
+}
+
+function renderDept(){
+  const ds  = deptStats(S.month);
+  const all = totals(S.emps, S.month);
+  const M   = monthObj();
+
+  $('#deptTiles').innerHTML = [
+    tile('Số phòng ban', 'Departments', ds.length, null, '', 'phòng ban'),
+    tile('Nhân sự',      'Headcount',   S.emps.length, null, '', 'người'),
+    tile('Chi phí BQ/người', 'Avg cost per head', all.bqChiPhi, null, 'e'),
+    tile('Thực lĩnh BQ/người','Avg net per head', all.bqThucLinh, null, '')
+  ].join('');
+  $('#deptMeta').textContent = `${M.vi} · đơn vị: VNĐ`;
+
+  /* Cơ cấu chi phí */
+  const rows = ds.map(d => ({
+    label: d.vi.replace('Phòng ', ''),
+    sub  : `${d.list.length} người`,
+    total: d.chiPhiDN,
+    vals : COMPO.map(k => k.f(d))
+  }));
+  $('#c-deptstack').innerHTML = hStack(rows, COMPO.map(k => k.c), COMPO.map(k => k.vi));
+  $('#l-deptstack').innerHTML = legendHtml(COMPO);
+
+  /* Chi phí bình quân */
+  $('#c-deptavg').innerHTML = hBars(
+    ds.slice().sort((a, b) => b.bqChiPhi - a.bqChiPhi)
+      .map(d => ({ label:d.vi, sub:`${d.list.length} người`, val:d.bqChiPhi, color:'var(--accent)' })),
+    'Chi phí bình quân một nhân sự / tháng');
+
+  /* Thẻ từng phòng ban */
+  $('#deptCards').innerHTML = ds.map(d => {
+    const seg = COMPO.map(k => [k.f(d), k.c]);
+    return `<div class="deptcard">
+      <h3>${esc(d.vi)}<span class="hc">${d.list.length} người</span></h3>
+      <div class="note" style="font-size:11px;color:var(--ink-3)">${esc(d.en)}</div>
+      <dl>
+        <dt>Quỹ lương gross</dt><dd>${fm(d.tongThuNhap)}</dd>
+        <dt>Thực lĩnh</dt><dd>${fm(d.thucLinh)}</dd>
+        <dt>Thuế TNCN</dt><dd>${fm(d.thueTNCN)}</dd>
+        <dt>DN đóng BH + KPCĐ</dt><dd>${fm(d.bhDN)}</dd>
+        <dt style="font-weight:600;color:var(--ink)">Tổng chi phí</dt><dd style="font-weight:700">${fm(d.chiPhiDN)}</dd>
+        <dt>Bình quân/người</dt><dd>${fm(d.bqChiPhi)}</dd>
+      </dl>
+      <div class="bar-mini">${seg.map(([v, c]) =>
+        `<i style="background:${c};width:${(v / d.chiPhiDN * 100).toFixed(2)}%"></i>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  /* Bảng số liệu */
+  $('#deptTable').innerHTML = `<thead><tr>
+      <th>Phòng ban</th><th class="r">Người</th><th class="r">Ngày công</th><th class="r">Giờ OT</th>
+      <th class="r">Quỹ lương gross</th><th class="r">BH NLĐ</th><th class="r">Thuế TNCN</th>
+      <th class="r">Thực lĩnh</th><th class="r">DN đóng</th><th class="r">Tổng chi phí</th><th class="r">BQ/người</th>
+    </tr></thead><tbody>
+    ${ds.map(d => `<tr>
+      <td><b>${esc(d.vi)}</b><br><i class="en" style="font-size:11px">${esc(d.en)}</i></td>
+      <td class="r">${d.list.length}</td><td class="r">${d.nc}</td><td class="r">${d.otGio}</td>
+      <td class="r">${fm(d.tongThuNhap)}</td><td class="r">${fm(d.bhNLD)}</td><td class="r">${fm(d.thueTNCN)}</td>
+      <td class="r"><b>${fm(d.thucLinh)}</b></td><td class="r">${fm(d.bhDN)}</td>
+      <td class="r"><b>${fm(d.chiPhiDN)}</b></td><td class="r">${fm(d.bqChiPhi)}</td></tr>`).join('')}
+    <tr class="grand"><td>TỔNG CỘNG</td><td class="r">${S.emps.length}</td>
+      <td class="r">${all.nc}</td><td class="r">${all.otGio}</td>
+      <td class="r">${fm(all.tongThuNhap)}</td><td class="r">${fm(all.bhNLD)}</td>
+      <td class="r">${fm(all.thueTNCN)}</td><td class="r">${fm(all.thucLinh)}</td>
+      <td class="r">${fm(all.bhDN)}</td><td class="r">${fm(all.chiPhiDN)}</td>
+      <td class="r">${fm(all.bqChiPhi)}</td></tr></tbody>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 14 · TAB BÁO CÁO CÔNG TY
+   Toàn công ty và phòng ban. Không có bất kỳ so sánh nào giữa các cá nhân.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderReport(){
+  const byMonth = MONTHS.map(m => ({ m, t: totals(S.emps, m.id) }));
+  const idx = monthIdx(S.month);
+  const cur = byMonth[idx].t;
+  const prv = idx > 0 ? byMonth[idx - 1].t : null;
+  const M   = monthObj();
+  const pM  = prevMonth(S.month);
+
+  /* --- Thẻ chỉ số --- */
+  $('#repTiles').innerHTML = [
+    tile('Nhân sự',            'Headcount',      cur.n,          prv && prv.n, '', 'người'),
+    tile('Quỹ lương gross',    'Gross payroll',  cur.tongThuNhap, prv && prv.tongThuNhap),
+    tile('Tổng chi phí DN',    'Employer cost',  cur.chiPhiDN,   prv && prv.chiPhiDN, 'e'),
+    tile('Thuế TNCN',          'PIT withheld',   cur.thueTNCN,   prv && prv.thueTNCN, 'd'),
+    tile('Tổng giờ OT',        'Overtime hours', cur.otGio,      prv && prv.otGio, '', 'giờ'),
+    tile('Chi phí / 1đ thực lĩnh', 'Cost per 1đ net', cur.chiPhiDN / cur.thucLinh, null, 'e',
+         'đồng chi ra cho mỗi đồng về tay', v => v.toFixed(2).replace('.', ',') + ' đ')
+  ].join('');
+
+  /* --- Diễn biến toàn công ty --- */
+  const trend = [
+    { vi:'Quỹ lương gross', en:'Gross payroll', c:'var(--s1)', f:t => t.tongThuNhap },
+    { vi:'Tổng chi phí DN', en:'Employer cost', c:'var(--s2)', f:t => t.chiPhiDN },
+    { vi:'Tổng thực lĩnh',  en:'Net pay',       c:'var(--s3)', f:t => t.thucLinh }
+  ];
+  $('#c-trend').innerHTML = cols(
+    byMonth.map(x => ({ label:x.m.vi, sub:x.m.en, vals:trend.map(s => s.f(x.t)) })),
+    trend.map(s => s.c), trend.map(s => s.vi),
+    { activeIdx:idx, label:'Diễn biến quỹ lương toàn công ty theo tháng' });
+  $('#l-trend').innerHTML = legendHtml(trend);
+
+  /* --- Cơ cấu chi phí toàn công ty (cột chồng) --- */
+  $('#c-compo').innerHTML = cols(
+    byMonth.map(x => ({ label:x.m.vi, sub:x.m.en, vals:COMPO.map(k => k.f(x.t)) })),
+    COMPO.map(k => k.c), COMPO.map(k => k.vi),
+    { mode:'stacked', activeIdx:idx, W:520, H:250, label:'Cơ cấu chi phí lao động toàn công ty' });
+  $('#l-compo').innerHTML = legendHtml(COMPO);
+
+  /* --- Chi phí theo phòng ban qua các tháng --- */
+  const dsByMonth = MONTHS.map(m => deptStats(m.id));
+  const deptList  = dsByMonth[0].map(d => d.id);
+  $('#c-deptmonth').innerHTML = cols(
+    MONTHS.map((m, i) => ({
+      label:m.vi.replace('Tháng ', 'T'), sub:m.en,
+      vals: deptList.map(id => (dsByMonth[i].find(d => d.id === id) || { chiPhiDN:0 }).chiPhiDN)
+    })),
+    deptList.map(id => deptColor(id)), deptList.map(id => deptName(id)),
+    { activeIdx:idx, W:520, H:250, label:'Tổng chi phí doanh nghiệp theo phòng ban qua các tháng' });
+  $('#l-deptmonth').innerHTML = legendHtml(deptList.map(id => ({ vi:deptName(id), c:deptColor(id) })));
+
+  /* --- Bảng so sánh phòng ban: kỳ hiện tại vs kỳ trước --- */
+  $('#repMeta').textContent = pM ? `${pM.vi} → ${M.vi}` : `${M.vi} (kỳ đầu tiên)`;
+  const curDs = deptStats(S.month);
+  const prvDs = pM ? deptStats(pM.id) : null;
+  const tot   = curDs.reduce((a, d) => a + d.chiPhiDN, 0);
+
+  $('#repDeptTable').innerHTML = `<thead><tr>
+      <th>Phòng ban</th><th class="r">Người</th><th class="r">Quỹ lương gross</th>
+      <th class="r">Tổng chi phí DN</th><th class="r">% tổng chi phí</th><th class="r">BQ/người</th>
+      <th class="r">Kỳ trước</th><th class="r">Chênh lệch</th><th class="r">%</th>
+      <th>Ghi nhận</th></tr></thead><tbody>
+    ${curDs.map(d => {
+      const p = prvDs ? prvDs.find(x => x.id === d.id) : null;
+      const delta = p ? d.chiPhiDN - p.chiPhiDN : null;
+      const rate  = p && p.chiPhiDN ? delta / p.chiPhiDN : null;
+      const color = delta === null ? '' : `color:${delta >= 0 ? 'var(--accent)' : 'var(--debit)'};font-weight:600`;
+      return `<tr>
+        <td><b>${esc(d.vi)}</b><br><i class="en" style="font-size:11px">${esc(d.en)}</i></td>
+        <td class="r">${d.list.length}</td>
+        <td class="r">${fm(d.tongThuNhap)}</td>
+        <td class="r"><b>${fm(d.chiPhiDN)}</b></td>
+        <td class="r">${pct(d.chiPhiDN / tot)}</td>
+        <td class="r">${fm(d.bqChiPhi)}</td>
+        <td class="r">${p ? fm(p.chiPhiDN) : '–'}</td>
+        <td class="r" style="${color}">${delta === null ? '–' : (delta >= 0 ? '+' : '−') + fm(Math.abs(delta))}</td>
+        <td class="r" style="${color}">${rate === null ? '–' : pct(rate)}</td>
+        <td class="note">${p ? deptReason(d, p) : 'chưa có kỳ trước để so sánh'}</td></tr>`;
+    }).join('')}
+    <tr class="grand"><td>TOÀN CÔNG TY</td><td class="r">${cur.n}</td>
+      <td class="r">${fm(cur.tongThuNhap)}</td><td class="r">${fm(cur.chiPhiDN)}</td>
+      <td class="r">100,0%</td><td class="r">${fm(cur.bqChiPhi)}</td>
+      <td class="r">${prv ? fm(prv.chiPhiDN) : '–'}</td>
+      <td class="r" style="${prv ? `color:${cur.chiPhiDN - prv.chiPhiDN >= 0 ? 'var(--accent)' : 'var(--debit)'}` : ''}">
+        ${prv ? (cur.chiPhiDN - prv.chiPhiDN >= 0 ? '+' : '−') + fm(Math.abs(cur.chiPhiDN - prv.chiPhiDN)) : '–'}</td>
+      <td class="r">${prv ? pct((cur.chiPhiDN - prv.chiPhiDN) / prv.chiPhiDN) : '–'}</td>
+      <td></td></tr></tbody>`;
+
+  /* --- Bảng biến động toàn công ty theo từng kỳ --- */
+  const metrics = [
+    ['Nhân sự (người)',            t => t.n,            v => nf.format(v)],
+    ['Tổng ngày công',             t => t.nc,           v => nf.format(v)],
+    ['Tổng giờ làm thêm',          t => t.otGio,        v => nf.format(v)],
+    ['Quỹ lương gross',            t => t.tongThuNhap,  fm],
+    ['Trong đó: thưởng',           t => t.thuong,       fm],
+    ['Trong đó: tiền làm thêm',    t => t.tienOT,       fm],
+    ['BH người lao động đóng',     t => t.bhNLD,        fm],
+    ['Thuế TNCN khấu trừ',         t => t.thueTNCN,     fm],
+    ['Tổng thực lĩnh',             t => t.thucLinh,     fm],
+    ['DN đóng BH + KPCĐ',          t => t.bhDN,         fm],
+    ['TỔNG CHI PHÍ DOANH NGHIỆP',  t => t.chiPhiDN,     fm],
+    ['Chi phí bình quân / người',  t => t.bqChiPhi,     fm]
+  ];
+  $('#repCoTable').innerHTML = `<thead><tr><th>Chỉ tiêu</th>
+      ${MONTHS.map(m => `<th class="r">${m.vi}</th>`).join('')}
+      <th class="r">Chênh lệch kỳ cuối</th><th class="r">%</th></tr></thead><tbody>
+    ${metrics.map(([label, f, fmt]) => {
+      const vals = byMonth.map(x => f(x.t));
+      const d = vals[vals.length - 1] - vals[vals.length - 2];
+      const r = vals[vals.length - 2] ? d / vals[vals.length - 2] : 0;
+      const color = `color:${d >= 0 ? 'var(--accent)' : 'var(--debit)'}`;
+      const strong = label.startsWith('TỔNG');
+      return `<tr${strong ? ' class="grand"' : ''}><td>${strong ? `<b>${label}</b>` : label}</td>
+        ${vals.map(v => `<td class="r">${fmt(v)}</td>`).join('')}
+        <td class="r" style="${d === 0 ? '' : color};font-weight:600">${d === 0 ? '—' : (d > 0 ? '+' : '−') + fmt(Math.abs(d))}</td>
+        <td class="r" style="${d === 0 ? '' : color}">${pct(r)}</td></tr>`;
+    }).join('')}</tbody>`;
+
+  /* --- Diễn giải --- */
+  if(pM){
+    const dNcc  = M.ncc - pM.ncc;
+    const dOT   = cur.otGio - prv.otGio;
+    const dTh   = cur.thuong - prv.thuong;
+    const dCost = cur.chiPhiDN - prv.chiPhiDN;
+    const bits = [];
+    if(dNcc) bits.push(`ngày công chuẩn đổi từ ${pM.ncc} xuống ${M.ncc} ngày`);
+    if(dTh)  bits.push(`quỹ thưởng ${dTh >= 0 ? 'tăng' : 'giảm'} ${fm(Math.abs(dTh))} đ`);
+    if(dOT)  bits.push(`tổng giờ làm thêm ${dOT >= 0 ? 'tăng' : 'giảm'} ${Math.abs(dOT)} giờ`);
+    const nghi = S.emps.reduce((a, e) => a + (calc(e, M.id).ncc - calc(e, M.id).nc), 0);
+    if(nghi) bits.push(`toàn công ty nghỉ ${nghi} công so với ngày công chuẩn`);
+    $('#repNarr').innerHTML =
+      `<b>${M.vi} so với ${pM.vi}:</b> tổng chi phí lao động ${dCost >= 0 ? 'tăng' : 'giảm'} `
+      + `<b style="color:${dCost >= 0 ? 'var(--accent)' : 'var(--debit)'}">${fm(Math.abs(dCost))} đ</b> `
+      + `(${pct(dCost / prv.chiPhiDN)}). Nguyên nhân chính: ${bits.length ? bits.join('; ') : 'không có biến động đáng kể'}. `
+      + `Phần bảo hiểm doanh nghiệp đóng gần như không đổi vì tính trên tiền lương đóng bảo hiểm, không phụ thuộc ngày công.`;
+  } else {
+    $('#repNarr').textContent = `${M.vi} là kỳ lương đầu tiên trong dữ liệu — chưa có kỳ liền trước để so sánh.`;
+  }
+}
+
+/** Diễn giải biến động của một phòng ban (cấp phòng ban, không nêu cá nhân). */
+function deptReason(cur, prv){
+  const bits = [];
+  if(cur.list.length !== prv.list.length) bits.push(`nhân sự ${prv.list.length} → ${cur.list.length}`);
+  const dTh = cur.thuong - prv.thuong;
+  if(dTh) bits.push(dTh > 0 ? `thưởng +${fmM(dTh)}` : (cur.thuong === 0 ? 'kỳ này không có thưởng' : `thưởng −${fmM(-dTh)}`));
+  const dOT = cur.otGio - prv.otGio;
+  if(dOT) bits.push(`OT ${dOT > 0 ? '+' : '−'}${Math.abs(dOT)}h`);
+  const dNc = cur.nc - prv.nc;
+  if(dNc) bits.push(`ngày công ${dNc > 0 ? '+' : '−'}${Math.abs(dNc)}`);
+  return bits.length ? bits.join(' · ') : 'không đổi';
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 15 · TAB CÔNG THỨC & QUY ĐỊNH
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderDocs(){
+  /* --- Hằng số (chỉ đọc) --- */
+  const fmtConst = (name, unit) => {
+    const v = K[name];
+    if(unit === '%') return (v * 100).toFixed(2).replace('.', ',') + '%';
+    if(unit === 'đ') return nf.format(v) + ' đ';
+    if(unit === '×') return String(v).replace('.', ',') + '×';
+    return v === 1 ? '1 — có' : v === 0 ? '0 — không' : String(v);
+  };
+  $('#constBox').innerHTML =
+    `<p class="note" style="margin:0 0 10px">Các hệ số dưới đây là hằng số pháp định, được khai báo cứng trong
+     <code class="mono" style="font-size:11px">const K</code> ở đầu tệp <code class="mono" style="font-size:11px">index.html</code>
+     và đã <code class="mono" style="font-size:11px">Object.freeze()</code> — giao diện không cho phép sửa.
+     Khi quy định thay đổi, sửa trong mã nguồn rồi commit lại.</p>
+     <div style="overflow-x:auto"><table class="tbl"><thead><tr>
+       <th>Tên hằng số</th><th>Diễn giải</th><th class="r">Giá trị</th></tr></thead><tbody>
+     ${CONST_DOC.map(([name, vi, en, unit]) => `<tr>
+        <td><code class="mono" style="font-size:11px">${name}</code></td>
+        <td>${esc(vi)}<br><i class="en" style="font-size:11px">${esc(en)}</i></td>
+        <td class="r"><b>${fmtConst(name, unit)}</b></td></tr>`).join('')}
+     </tbody></table></div>
+     <div style="margin-top:12px">
+       <b style="font-size:12.5px">Biểu thuế lũy tiến 5 bậc</b>
+       <table class="tbl" style="margin-top:6px"><thead><tr>
+         <th>Bậc</th><th>Thu nhập tính thuế / tháng</th><th class="r">Thuế suất</th><th>Công thức rút gọn</th></tr></thead><tbody>
+       ${['Đến 10 triệu','Trên 10 – 30 triệu','Trên 30 – 60 triệu','Trên 60 – 100 triệu','Trên 100 triệu']
+         .map((lab, i) => { const b = TAX_BANDS[i]; return `<tr><td>${i + 1}</td><td>${lab}</td>
+           <td class="r">${b.rate * 100}%</td>
+           <td><code class="f">${b.rate * 100}% × TNTT${b.sub ? ' − ' + nf.format(b.sub) : ''}</code></td></tr>`; }).join('')}
+       </tbody></table></div>`;
+
+  /* --- Gánh nặng chi phí --- */
+  const grid = [10000000, 20000000, 30000000, 50000000, 80000000];
+  $('#burdenBox').innerHTML =
+    `<p class="note" style="margin:0 0 10px">Giả định: người lao động không có người phụ thuộc, làm đủ công,
+      tiền lương đóng bảo hiểm bằng lương gross.</p>
+     <div style="overflow-x:auto"><table class="tbl"><thead><tr>
+       <th>Lương gross</th><th class="r">NLĐ đóng BH</th><th class="r">Thuế TNCN</th><th class="r">Thực lĩnh</th>
+       <th class="r">DN đóng thêm</th><th class="r">Tổng chi phí DN</th><th class="r">Phụ trội</th></tr></thead><tbody>
+     ${grid.map(x => {
+       const base   = Math.min(Math.max(x, K.MUC_THAM_CHIEU), K.TRAN_BHXH);
+       const baseTN = Math.min(Math.max(x, K.MUC_THAM_CHIEU), K.TRAN_BHTN);
+       const nld  = R(base * (K.BHXH_NLD + K.BHYT_NLD)) + R(baseTN * K.BHTN_NLD);
+       const dn   = R(base * (K.BHXH_DN + K.BHYT_DN + K.KPCD)) + R(baseTN * K.BHTN_DN);
+       const thue = thueLuyTien(Math.max(x - nld - K.GTGC_BAN_THAN, 0));
+       return `<tr><td><b>${fm(x)}</b></td><td class="r">${fm(nld)}</td><td class="r">${fm(thue)}</td>
+         <td class="r"><b>${fm(x - nld - thue)}</b></td><td class="r">${fm(dn)}</td>
+         <td class="r"><b>${fm(x + dn)}</b></td><td class="r">${pct(dn / x)}</td></tr>`;
+     }).join('')}</tbody></table></div>
+     <p class="note" style="margin:10px 0 0">Từ mức lương đóng bảo hiểm <b>${fm(K.TRAN_BHXH)} đ</b> trở lên,
+       phần BHXH/BHYT bị chặn trần nên tỷ lệ phụ trội giảm dần — đó là lý do cột “Lương đóng BH” (T)
+       tách riêng khỏi cột “Lương chính” (G) trong bảng lương.</p>`;
+
+  /* --- Bảng công thức --- */
+  const extra = [
+    ['—', 'Dòng cộng phòng ban & tổng cộng', '=SUBTOTAL(9,S8:S12)',
+     'SUBTOTAL bỏ qua các dòng SUBTOTAL lồng bên trong nên dòng tổng không bị cộng trùng.'],
+    ['—', 'Phiếu lương lấy dữ liệu', '=INDEX(BL_T08!$AE:$AE,MATCH($C$4,BL_T08!$B:$B,0))',
+     'Sheet PhieuLuong trong file Excel: đổi mã nhân viên ở ô C4 là toàn bộ phiếu tính lại.'],
+    ['—', 'Báo cáo — số người mỗi phòng ban', '=COUNTIF(BL_T08!$E$7:$E$44,$A12)',
+     'Cột E chứa mã phòng ban; các dòng tiêu đề và dòng cộng để trống nên không bị đếm.'],
+    ['—', 'Báo cáo — chi phí theo phòng ban', '=SUMIF(BL_T08!$E$7:$E$44,$A12,BL_T08!AJ$7:AJ$44)',
+     'Cộng theo mã phòng ban, dùng cho toàn bộ bảng so sánh phòng ban.'],
+    ['—', 'Báo cáo — tổng toàn công ty', '=SUBTOTAL(9,BL_T08!$AJ$7:$AJ$44)',
+     'Tổng hợp cấp công ty, tham chiếu thẳng sang sheet bảng lương từng kỳ.'],
+    ['—', 'Báo cáo — % thay đổi so với kỳ trước', '=IFERROR(E12/D12-1,0)',
+     'So sánh giữa các kỳ lương ở cấp phòng ban và cấp công ty.']
+  ];
+  $('#formulaTable').innerHTML = `<thead><tr>
+      <th style="width:48px">Cột</th><th style="width:200px">Chỉ tiêu</th>
+      <th>Công thức Excel</th><th style="width:300px">Giải thích</th></tr></thead><tbody>
+    ${COLS.filter(c => c.f).map(c => `<tr>
+      <td class="mono"><b>${c.L}</b></td>
+      <td><b>${esc(c.vi)}</b><br><i class="en" style="font-size:11px">${esc(c.en)}</i></td>
+      <td><code class="f">${esc(c.f(FIRST_ROW))}</code></td>
+      <td class="note">${esc(FORMULA_NOTE[c.k] || '')}</td></tr>`).join('')}
+    ${extra.map(([a, b, f, d]) => `<tr>
+      <td class="mono"><b>${a}</b></td><td><b>${esc(b)}</b></td>
+      <td><code class="f">${esc(f)}</code></td><td class="note">${esc(d)}</td></tr>`).join('')}
+    </tbody>`;
+
+  /* --- Căn cứ pháp lý --- */
+  $('#legalBox').innerHTML = `
+    <div class="grid2">
+      <div>
+        <h3 style="font-size:13px;font-family:'IBM Plex Sans Condensed',sans-serif;margin-bottom:6px">Bảo hiểm bắt buộc</h3>
+        <ul class="note" style="padding-left:18px;margin:0">
+          <li>Người lao động đóng <b>10,5%</b>: BHXH 8% + BHYT 1,5% + BHTN 1%.</li>
+          <li>Doanh nghiệp đóng <b>21,5%</b>: BHXH 17,5% (14% hưu trí–tử tuất, 3% ốm đau–thai sản, 0,5% TNLĐ–BNN) + BHYT 3% + BHTN 1%.</li>
+          <li>Cộng thêm <b>kinh phí công đoàn 2%</b> tính trên quỹ tiền lương đóng BHXH → tổng gánh nặng doanh nghiệp <b>23,5%</b>.</li>
+          <li>Trần đóng BHXH/BHYT: <b>46.800.000 đ</b> (20 × mức tham chiếu 2.340.000 đ). Trần đóng BHTN: <b>106.000.000 đ</b>
+              (20 × lương tối thiểu vùng I 5.300.000 đ theo Nghị định 293/2025/NĐ-CP, áp dụng từ 01/01/2026).</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:13px;font-family:'IBM Plex Sans Condensed',sans-serif;margin-bottom:6px">Thuế thu nhập cá nhân</h3>
+        <ul class="note" style="padding-left:18px;margin:0">
+          <li>Giảm trừ bản thân <b>15,5 triệu/tháng</b>, mỗi người phụ thuộc <b>6,2 triệu/tháng</b>
+              (Nghị quyết 110/2025/UBTVQH15, áp dụng từ kỳ tính thuế 2026).</li>
+          <li>Biểu lũy tiến rút từ 7 xuống <b>5 bậc</b> từ 01/01/2026: 5% – 10% – 20% – 30% – 35%.</li>
+          <li>Tiền ăn giữa ca miễn thuế tối đa <b>730.000 đ/tháng</b>; phần tiền làm thêm <i>trả cao hơn</i>
+              đơn giá giờ làm việc bình thường được miễn thuế.</li>
+          <li>Khoán điện thoại được miễn thuế nếu đúng quy chế tài chính nội bộ; xăng xe đi làm hằng ngày
+              mặc định tính là thu nhập chịu thuế.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note" style="margin-top:12px"><b>Lưu ý:</b> đây là công cụ minh hoạ với dữ liệu giả định.
+      Trước khi dùng cho kỳ lương thật, hãy đối chiếu lại mức tham chiếu, lương tối thiểu vùng của địa phương
+      và quy chế lương – thưởng của doanh nghiệp.</p>
+    <div class="src" style="margin-top:10px"><b>Nguồn:</b>
+      <a href="https://thuvienphapluat.vn/phap-luat-doanh-nghiep/bai-viet/ty-le-dong-bhxh-2026-cua-doanh-nghiep-nguoi-lao-dong-ho-kinh-doanh-bao-nhieu-22647.html" target="_blank" rel="noopener">Tỷ lệ đóng BHXH 2026</a> ·
+      <a href="https://thuvienphapluat.vn/phap-luat-doanh-nghiep/bai-viet/muc-tran-dong-bhxh-bat-buoc-nam-2026-18319.html" target="_blank" rel="noopener">Mức trần đóng BHXH 2026</a> ·
+      <a href="https://ketoanthienung.net/muc-luong-toi-thieu-vung-nam-moi-nhat-hien-nay.htm" target="_blank" rel="noopener">Lương tối thiểu vùng 2026 — NĐ 293/2025</a> ·
+      <a href="https://thuvienphapluat.vn/phap-luat-doanh-nghiep/bai-viet/muc-giam-tru-gia-canh-moi-2026-va-cach-tinh-18704.html" target="_blank" rel="noopener">Giảm trừ gia cảnh 2026</a> ·
+      <a href="https://thuvienphapluat.vn/phap-luat-doanh-nghiep/bai-viet/cong-thuc-tinh-thue-tncn-2026-rut-gon-theo-bieu-thue-5-bac-2026-17766.html" target="_blank" rel="noopener">Biểu thuế TNCN 5 bậc 2026</a> ·
+      <a href="https://thuvienphapluat.vn/phap-luat-doanh-nghiep/bai-viet/quy-dinh-ve-kinh-phi-cong-doan-2026-moi-nhat-doi-voi-doanh-nghiep-20067.html" target="_blank" rel="noopener">Kinh phí công đoàn 2026</a>
+    </div>`;
+}
+
+const FORMULA_NOTE = {
+  tongPhuCap  : 'Cộng bốn khoản phụ cấp.',
+  ncc         : 'Ngày công chuẩn khai báo một lần ở ô D4, cả cột tham chiếu tới đó.',
+  luongTheoCong:'Lương và phụ cấp chia ngày công chuẩn, nhân ngày công thực tế.',
+  tienOT      : 'Đơn giá giờ × số giờ làm thêm × 150% (ngày thường).',
+  tongThuNhap : 'Gross thực tế của kỳ lương.',
+  bhxhNLD     : 'Kẹp căn cứ đóng giữa sàn và trần trước khi nhân tỷ lệ.',
+  bhytNLD     : 'Cùng căn cứ đóng với BHXH.',
+  bhtnNLD     : 'Trần BHTN cao hơn: 20 × lương tối thiểu vùng.',
+  bhNLD       : 'Tổng phần người lao động đóng (10,5%).',
+  tongMien    : 'Ăn ca tối đa 730.000 đ, khoán điện thoại, và phần tiền làm thêm trả cao hơn giờ bình thường.',
+  tnChiuThue  : 'Gross trừ phần thu nhập được miễn.',
+  tongGiamTru : 'Giảm trừ bản thân + người phụ thuộc + bảo hiểm bắt buộc.',
+  tntt        : 'Không cho âm.',
+  thueTNCN    : 'Biểu lũy tiến 5 bậc, viết dưới dạng IF lồng rút gọn.',
+  thucLinh    : 'Gross − bảo hiểm − thuế − tạm ứng.',
+  bhxhDN      : '14% hưu trí–tử tuất + 3% ốm đau–thai sản + 0,5% TNLĐ–BNN.',
+  bhytDN      : 'Doanh nghiệp đóng 3% trên cùng căn cứ.',
+  bhtnDN      : 'Doanh nghiệp đóng 1%, áp trần theo lương tối thiểu vùng.',
+  kpcd        : 'Doanh nghiệp nộp kể cả khi chưa có công đoàn cơ sở.',
+  chiPhiDN    : 'Con số thật doanh nghiệp bỏ ra cho nhân sự này.'
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 16 · ĐIỀU HƯỚNG, IN ẤN, KHỞI TẠO
+   ═══════════════════════════════════════════════════════════════════════════ */
+function show(p){
+  $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.p === p)));
+  $$('.panel').forEach(s => s.classList.toggle('on', s.id === 'p-' + p));
+  window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function printWith(orientation){
+  const st = document.createElement('style');
+  st.textContent = `@page{size:A4 ${orientation}; margin:${orientation === 'landscape' ? '8mm' : '12mm'}}`;
+  document.head.appendChild(st);
+
+  // Thu nhỏ bảng lương cho vừa khổ ngang (Chrome/Edge hỗ trợ zoom khi in)
+  const wrap = $('.sheetwrap'), tbl = $('#sheet');
+  let z = null;
+  if(orientation === 'landscape' && wrap && tbl && tbl.scrollWidth){
+    z = Math.min(1, Math.max(0.55, 1050 / tbl.scrollWidth));
+    wrap.style.zoom = z;
+  }
+  window.print();
+  setTimeout(() => { st.remove(); if(z !== null) wrap.style.zoom = ''; }, 1200);
+}
+
+function renderAll(){
+  const sel = $('#eSel');
+  sel.innerHTML = DEPTS.map(d => {
+    const list = S.emps.filter(e => e.bp === d.id);
+    if(!list.length) return '';
+    return `<optgroup label="${esc(d.vi)}">`
+         + list.map(e => `<option value="${e.id}">${esc(e.id)} — ${esc(e.ten)}</option>`).join('')
+         + '</optgroup>';
+  }).join('');
+  sel.value = S.empSel;
+
+  renderSheet();
+  renderSlip();
+  renderDept();
+  renderReport();
+  renderDocs();
+}
+
+function init(){
+  /* Bộ chọn kỳ lương & phòng ban */
+  $('#mSel').innerHTML = MONTHS.map(m => `<option value="${m.id}">${m.vi} · ${m.en}</option>`).join('');
+  $('#mSel').value = S.month;
+  $('#dSel').innerHTML = '<option value="ALL">Toàn công ty · All</option>'
+    + DEPTS.map(d => `<option value="${d.id}">${d.vi}</option>`).join('');
+  $('#dSel').value = S.dept;
+
+  $('#mSel').addEventListener('change', e => { S.month = e.target.value; renderAll(); });
+  $('#dSel').addEventListener('change', e => { S.dept  = e.target.value; renderSheet(); });
+  $('#eSel').addEventListener('change', e => { S.empSel = e.target.value; renderSlip(); });
+
+  $$('.tab').forEach(t => t.addEventListener('click', () => show(t.dataset.p)));
+  $$('.chip').forEach(c => c.addEventListener('click', () => {
+    const on = c.getAttribute('aria-pressed') !== 'true';
+    c.setAttribute('aria-pressed', String(on));
+    S.cols[c.dataset.g] = on;
+    renderSheet();
+  }));
+
+  /* Xuất & in */
+  $('#btnXlsx').addEventListener('click', withBusy('#btnXlsx', () => exportWorkbook()));
+  $('#slipXlsx').addEventListener('click', withBusy('#slipXlsx', () => exportPayslip(S.empSel)));
+  $('#slipDeptXlsx').addEventListener('click', withBusy('#slipDeptXlsx', () => {
+    const e = S.emps.find(x => x.id === S.empSel);
+    exportDeptPayslips(e.bp);
+  }));
+  $('#btnPrint').addEventListener('click', () => {
+    const active = $('.tab[aria-selected="true"]').dataset.p;
+    printWith(active === 'slip' || active === 'doc' ? 'portrait' : 'landscape');
+  });
+  $('#slipPrint').addEventListener('click', () => { show('slip'); setTimeout(() => printWith('portrait'), 80); });
+
+  /* Đặt lại & giao diện sáng/tối */
+  $('#btnReset').addEventListener('click', () => {
+    if(!confirm('Khôi phục toàn bộ dữ liệu mẫu ban đầu? Mọi thay đổi bạn đã nhập sẽ mất.')) return;
+    S.emps = seedEmployees();
+    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    renderAll();
+    toast('Đã khôi phục dữ liệu mẫu ban đầu.');
+  });
+  $('#btnTheme').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const dark = cur ? cur === 'dark'
+                     : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+  });
+
+  renderAll();
+}
+
+/** Bọc một hành động nặng: khoá nút, nhả luồng để trình duyệt kịp vẽ. */
+function withBusy(selector, fn){
+  return () => {
+    const b = $(selector);
+    const label = b.textContent;
+    b.disabled = true;
+    b.textContent = '… đang tạo tệp';
+    setTimeout(() => {
+      try{ fn(); }
+      catch(err){
+        console.error(err);
+        toast('Không tạo được tệp Excel: ' + (err && err.message ? err.message : 'lỗi không xác định'));
+      }
+      finally{ b.disabled = false; b.textContent = label; }
+    }, 30);
+  };
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
