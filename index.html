@@ -92,6 +92,12 @@ select.pick{background:var(--surface-2); border:1px solid var(--rule-2); border-
 .btn.primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
 .btn.primary:hover{background:var(--accent-2); border-color:var(--accent-2)}
 .btn[disabled]{opacity:.45; cursor:progress}
+.btn.danger:hover{background:var(--debit); color:#fff; border-color:var(--debit)}
+/* Nhãn trạng thái kỳ lương trên thanh công cụ */
+.kystat{font-size:11.5px; font-weight:600; letter-spacing:.02em; padding:3px 8px; border-radius:99px;
+        border:1px solid var(--rule-2); background:var(--surface-2); color:var(--ink-2); white-space:nowrap}
+.kystat.new{background:color-mix(in srgb, var(--accent) 14%, transparent);
+            border-color:color-mix(in srgb, var(--accent) 45%, transparent); color:var(--accent)}
 .tabs{display:flex; padding:0 16px; overflow-x:auto; scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{
@@ -243,6 +249,47 @@ code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--acce
 #toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--surface); border:1px solid var(--rule-2);
   box-shadow:var(--shadow); border-radius:8px; padding:10px 14px; font-size:13px; z-index:99; max-width:90vw; display:none}
 
+/* ── Bảng diễn giải công thức (popover) ─────────────────────────────────────
+   Mở khi kế toán bấm vào một ô kết quả. Mục đích: không con số nào trên bảng
+   lương là "hộp đen" — luôn nói rõ nó được cấu thành từ đâu.                */
+#pop{position:fixed; z-index:120; width:min(460px, calc(100vw - 24px)); display:none;
+  background:var(--surface); border:1px solid var(--rule-3); border-radius:10px; box-shadow:var(--shadow);
+  font-size:12.5px; overflow:hidden}
+#pop.on{display:block}
+#pop .ph{display:flex; align-items:baseline; gap:8px; padding:10px 38px 10px 12px; border-bottom:1px solid var(--rule);
+  background:var(--surface-2)}
+#pop .ph b{font-size:13px}
+#pop .ph i{font-style:normal; font-size:11px; color:var(--ink-3)}
+#pop .ph .cellref{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--ink-3);
+  border:1px solid var(--rule-2); border-radius:4px; padding:1px 5px}
+#pop .pclose{position:absolute; top:7px; right:8px; width:22px; height:22px; border:0; border-radius:5px; cursor:pointer;
+  background:transparent; color:var(--ink-3); font-size:15px; line-height:1}
+#pop .pclose:hover{background:var(--surface-3); color:var(--ink)}
+#pop .psum{padding:10px 12px; line-height:1.65; border-bottom:1px solid var(--rule); color:var(--ink-2)}
+#pop .psum b{color:var(--ink); font-variant-numeric:tabular-nums}
+#pop .psum .op{color:var(--ink-3); padding:0 2px}
+#pop table{width:100%; border-collapse:collapse}
+#pop td{padding:5px 12px; border-bottom:1px solid var(--rule)}
+#pop td.n{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:500}
+#pop td.lbl i{font-style:normal; color:var(--ink-3); font-size:11px; display:block; margin-top:1px}
+#pop tr.minus td.n{color:var(--debit)}
+#pop tr.res td{background:var(--surface-2); font-weight:700; border-top:1px solid var(--rule-3); border-bottom:0}
+#pop .pfx{padding:9px 12px; border-top:1px solid var(--rule); background:var(--surface-2);
+  font-family:var(--mono); font-size:11px; color:var(--ink-2); word-break:break-all; line-height:1.55}
+#pop .pnote{padding:9px 12px; font-size:11.5px; color:var(--ink-3); line-height:1.6; border-top:1px solid var(--rule)}
+/* Dấu hiệu ô có thể xem diễn giải */
+td.calc.hasx{cursor:help}
+td.calc.hasx:hover{box-shadow:inset 0 0 0 1px var(--accent)}
+td.xopen{box-shadow:inset 0 0 0 2px var(--accent) !important}
+/* Dòng phiếu lương có bảng diễn giải */
+.slip tr.xrow{cursor:help}
+.slip tr.xrow:hover > td{background:var(--surface-2)}
+.slip .xmark{display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px;
+  margin-left:6px; border-radius:4px; border:1px solid var(--rule-2); background:var(--surface-2);
+  font-family:var(--mono); font-size:10px; font-style:italic; color:var(--ink-3); vertical-align:middle}
+.slip tr.xrow:hover .xmark{border-color:var(--accent); color:var(--accent)}
+@media print{ .slip .xmark{display:none} }
+
 @media (max-width:720px){
   .wrap{padding:10px}
   .slip{padding:18px 16px}
@@ -292,8 +339,12 @@ code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--acce
       </svg>
       <div><b>Quản lý bảng lương</b><span>Payroll &amp; HR report · Vùng I</span></div>
     </div>
-    <div class="ctl"><label for="mSel">Kỳ lương</label><select class="pick" id="mSel"></select></div>
+    <div class="ctl"><label for="ySel">Năm</label><select class="pick" id="ySel"></select></div>
+    <div class="ctl"><label for="mSel">Tháng</label><select class="pick" id="mSel"></select></div>
     <div class="ctl"><label for="dSel">Bộ phận</label><select class="pick" id="dSel"></select></div>
+    <span class="kystat" id="kyStat"></span>
+    <button class="btn" id="btnFillNcc" title="Đổ ngày công chuẩn của kỳ cho tất cả nhân sự">⤵ Điền ngày công chuẩn</button>
+    <button class="btn danger" id="btnDelKy" title="Xoá kỳ lương đang xem">🗑 Xoá kỳ</button>
     <div class="spacer"></div>
     <button class="btn primary" id="btnXlsx">⤓ Xuất Excel (.xlsx)</button>
     <button class="btn" id="btnPrint">⎙ In / PDF</button>
@@ -310,7 +361,7 @@ code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--acce
   <div class="fbar">
     <div class="ref" id="fRef">—</div>
     <div class="fx"><i>fx</i></div>
-    <div class="body" id="fBody"><span class="hint">Chọn một ô trong bảng lương để xem công thức Excel của ô đó.</span></div>
+    <div class="body" id="fBody"><span class="hint">Bấm vào một ô trong bảng lương để xem công thức Excel — ô kết quả còn mở bảng diễn giải chi tiết bằng lời.</span></div>
   </div>
 </div>
 
@@ -437,6 +488,7 @@ code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--acce
 </div>
 
 <div class="tip" id="tip" role="status" aria-live="off"></div>
+<div id="pop" class="noprint" role="dialog" aria-label="Diễn giải công thức"></div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -474,6 +526,10 @@ const K = Object.freeze({
   MIEN_DIEN_THOAI:      1,     // 1 = khoán điện thoại theo quy chế → miễn thuế
   MIEN_XANG_XE:         0,     // 0 = xăng xe đi làm hằng ngày → chịu thuế
 
+  /* --- Ngừng đóng bảo hiểm khi nghỉ dài --- */
+  NGAY_NGHI_MIEN_BH: 14,       // nghỉ không hưởng lương ≥ 14 ngày công/tháng → tháng đó không đóng BHXH
+                               // (Điều 42 Quyết định 595/QĐ-BHXH)
+
   /* --- Làm thêm giờ --- */
   HS_OT: 1.5                   // hệ số làm thêm ngày thường (150%)
 });
@@ -508,7 +564,8 @@ const CONST_DOC = [
   ['MAX_AN_TRUA',    'Tiền ăn giữa ca miễn thuế tối đa',         'Tax-free meal allowance',        'đ'],
   ['MIEN_DIEN_THOAI','Khoán điện thoại được miễn thuế (1 = có)', 'Phone allowance exempt',         '0/1'],
   ['MIEN_XANG_XE',   'Khoán xăng xe được miễn thuế (1 = có)',    'Fuel allowance exempt',          '0/1'],
-  ['HS_OT',          'Hệ số làm thêm giờ ngày thường',           'Weekday overtime factor',        '×']
+  ['HS_OT',          'Hệ số làm thêm giờ ngày thường',           'Weekday overtime factor',        '×'],
+  ['NGAY_NGHI_MIEN_BH','Nghỉ ≥ số ngày này thì tháng đó không đóng BH','Days off waiving SI',     'ngày']
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -528,12 +585,49 @@ const DEPTS = [
   { id:'KTSX', vi:'Phòng Kỹ thuật & Sản xuất', en:'Engineering & Production' }
 ];
 
-/* ncc = ngày công chuẩn của kỳ lương */
-const MONTHS = [
-  { id:'2026-06', vi:'Tháng 6/2026', en:'Jun 2026', sheet:'BL_T06', ncc:26 },
-  { id:'2026-07', vi:'Tháng 7/2026', en:'Jul 2026', sheet:'BL_T07', ncc:27 },
-  { id:'2026-08', vi:'Tháng 8/2026', en:'Aug 2026', sheet:'BL_T08', ncc:26 }
-];
+/* ───────────────────────────────────────────────────────────────────────────
+   SỔ KỲ KẾ TOÁN  ·  Accounting periods
+   ---------------------------------------------------------------------------
+   MONTHS không còn là danh sách cố định: kế toán tạo thêm kỳ từ giao diện.
+   Mỗi kỳ = { id:'2026-09', y, m, vi, en, sheet, ncc } với ncc = ngày công
+   chuẩn. Danh sách luôn được sắp xếp tăng dần theo thời gian, nên "kỳ liền
+   trước" chỉ đơn giản là phần tử đứng ngay trước trong mảng.
+   ─────────────────────────────────────────────────────────────────────────── */
+const MONTH_VI = ['','Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                  'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const MONTH_EN = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pad2 = n => String(n).padStart(2, '0');
+
+/** Ngày công chuẩn mặc định = số ngày thứ Hai→thứ Sáu trong tháng dương lịch.
+    Kế toán vẫn sửa lại được cho từng kỳ (nghỉ lễ, chế độ 5,5 ngày/tuần…). */
+function ngayCongChuan(y, m){
+  const last = new Date(y, m, 0).getDate();
+  let n = 0;
+  for(let d = 1; d <= last; d++){
+    const w = new Date(y, m - 1, d).getDay();
+    if(w >= 1 && w <= 5) n++;
+  }
+  return n;
+}
+
+/** Dựng một đối tượng kỳ lương. ncc = null → lấy mặc định theo lịch. */
+function makePeriod(y, m, ncc){
+  return {
+    id   : `${y}-${pad2(m)}`,
+    y, m,
+    vi   : `${MONTH_VI[m]}/${y}`,
+    en   : `${MONTH_EN[m]} ${y}`,
+    sheet: `BL_T${pad2(m)}_${y}`,          // tên sheet Excel, không trùng giữa các năm
+    ncc  : ncc == null ? ngayCongChuan(y, m) : ncc
+  };
+}
+
+const periodIdOf = (y, m) => `${y}-${pad2(m)}`;
+const cmpPeriod  = (a, b) => (a.y - b.y) || (a.m - b.m);
+
+/* Ba kỳ mẫu ban đầu. Từ kỳ thứ tư trở đi do kế toán tạo trên giao diện. */
+const SEED_MONTHS = [[2026, 6, 26], [2026, 7, 27], [2026, 8, 26]];
+let MONTHS = SEED_MONTHS.map(a => makePeriod(a[0], a[1], a[2]));
 
 /* Mỗi dòng: mã, họ tên, chức vụ, bộ phận, lương chính, PC trách nhiệm,
    PC ăn trưa, PC điện thoại, PC xăng xe, số người phụ thuộc, lương đóng BH,
@@ -577,12 +671,24 @@ const SEED = [
    [[26,18,500000,0],[27,28,2200000,0],[22,12,700000,1200000]]]
 ];
 
+/* ───────────────────────────────────────────────────────────────────────────
+   HAI NHÓM TRƯỜNG CỦA MỘT DÒNG LƯƠNG
+   ---------------------------------------------------------------------------
+   Cả hai đều nằm TRONG từng kỳ (e.thang[<mã kỳ>]), nên mỗi kỳ lương là một
+   chứng từ độc lập: sửa lương tháng 9 không làm sai lệch bảng lương tháng 6.
+
+   • HOP_DONG : thông số hợp đồng — được SAO CHÉP y nguyên sang kỳ mới.
+   • BIEN_DONG: thông số biến động — được ĐẶT VỀ 0 ở kỳ mới để kế toán nhập.
+   ─────────────────────────────────────────────────────────────────────────── */
+const F_HOP_DONG  = ['luongChinh','pcTrachNhiem','pcAnTrua','pcDienThoai','pcXangXe','npt','luongBH'];
+const F_BIEN_DONG = ['ngayCong','otGio','thuong','tamUng'];
+
 function seedEmployees(){
   return SEED.map((r, i) => ({
     stt:i+1, id:r[0], ten:r[1], chucVu:r[2], bp:r[3],
-    luongChinh:r[4], pcTrachNhiem:r[5], pcAnTrua:r[6], pcDienThoai:r[7], pcXangXe:r[8],
-    npt:r[9], luongBH:r[10],
     thang: Object.fromEntries(MONTHS.map((m, k) => [m.id, {
+      luongChinh:r[4], pcTrachNhiem:r[5], pcAnTrua:r[6], pcDienThoai:r[7], pcXangXe:r[8],
+      npt:r[9], luongBH:r[10],
       ngayCong:r[11][k][0], otGio:r[11][k][1], thuong:r[11][k][2], tamUng:r[11][k][3]
     }]))
   }));
@@ -593,7 +699,19 @@ function seedEmployees(){
    PHẦN 3 · TRẠNG THÁI ỨNG DỤNG
    Chỉ dữ liệu nhân sự được lưu lại (localStorage). Hằng số luôn lấy từ K.
    ═══════════════════════════════════════════════════════════════════════════ */
-const STORE_KEY = 'payroll-app-v2';
+/* ───────────────────────────────────────────────────────────────────────────
+   LƯU TRỮ — MỖI KỲ KẾ TOÁN MỘT KHOÁ RIÊNG TRONG localStorage
+   ---------------------------------------------------------------------------
+     payroll-v3:index        → danh mục kỳ + lựa chọn giao diện
+     payroll-v3:ky:2026-08   → bảng lương kỳ tháng 8/2026
+     payroll-v3:ky:2026-09   → bảng lương kỳ tháng 9/2026
+   Sửa một ô của tháng 9 chỉ ghi lại khoá của tháng 9; các kỳ đã chốt không bị
+   đụng tới. Xoá một kỳ cũng chỉ xoá đúng khoá của kỳ đó.
+   ─────────────────────────────────────────────────────────────────────────── */
+const STORE_PREFIX = 'payroll-v3';
+const K_INDEX      = STORE_PREFIX + ':index';
+const K_PERIOD     = id => STORE_PREFIX + ':ky:' + id;
+const STORE_KEY_V2 = 'payroll-app-v2';        // bản cũ — dọn khi khởi tạo lần đầu
 
 const S = {
   emps  : seedEmployees(),
@@ -601,22 +719,198 @@ const S = {
   dept  : 'ALL',
   empSel: 'NV003',
   cols  : { allow:true, work:true, ins:true, tax:true, emp:true },
-  sel   : null
+  sel   : null,
+  browseYear: null        // năm đang xem trên dropdown khi năm đó chưa có kỳ nào
 };
 
+const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet = (k, v) => { try{ localStorage.setItem(k, v); return true; }catch(e){ return false; } };
+const lsDel = k => { try{ localStorage.removeItem(k); }catch(e){} };
+
+/** Danh sách nhân sự của một kỳ, ở dạng phẳng để ghi xuống localStorage. */
+function periodRows(pid){
+  return S.emps.filter(e => e.thang[pid]).map(e => ({
+    id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp, ...e.thang[pid]
+  }));
+}
+
+/** Ghi một kỳ. Gọi mỗi khi kế toán sửa một ô thuộc kỳ đó.
+    LUÔN ghi kèm danh mục kỳ: hàm restore() chỉ nạp được dữ liệu khi có
+    payroll-v3:index, nên nếu thiếu nó thì mọi thứ đã ghi đều vô nghĩa. */
+function persistPeriod(pid){
+  const P = MONTHS.find(m => m.id === pid);
+  if(!P) return;
+  const ok = lsSet(K_PERIOD(pid), JSON.stringify({ v:3, id:pid, y:P.y, m:P.m, ncc:P.ncc, rows:periodRows(pid) }));
+  persistIndex();
+  if(!ok) canhBaoKhongLuuDuoc();
+  return ok;
+}
+
+/** Trình duyệt chặn localStorage (chế độ riêng tư / hết dung lượng) → phải nói
+    cho kế toán biết, thay vì im lặng để họ nhập cả buổi rồi mất trắng. */
+let daCanhBaoLuu = false;
+function canhBaoKhongLuuDuoc(){
+  if(daCanhBaoLuu) return;
+  daCanhBaoLuu = true;
+  if(typeof toast === 'function')
+    toast('⚠ Trình duyệt không cho lưu dữ liệu (chế độ riêng tư hoặc hết dung lượng). '
+        + 'Số liệu bạn nhập sẽ MẤT khi tải lại trang — hãy xuất Excel trước khi đóng.');
+}
+
+/** Ghi danh mục kỳ + lựa chọn giao diện. */
+function persistIndex(){
+  const ok = lsSet(K_INDEX, JSON.stringify({
+    v:3,
+    periods: MONTHS.map(m => ({ y:m.y, m:m.m, ncc:m.ncc })),
+    month: S.month, dept: S.dept, empSel: S.empSel
+  }));
+  if(!ok) canhBaoKhongLuuDuoc();
+  return ok;
+}
+
+/** Ghi lại toàn bộ (dùng khi tạo/xoá kỳ hoặc đặt lại dữ liệu mẫu). */
+function persist(){
+  persistIndex();
+  MONTHS.forEach(m => persistPeriod(m.id));
+}
+
+/** Nạp lại toàn bộ sổ kỳ từ localStorage. Hỏng ở đâu thì bỏ qua kỳ đó. */
 (function restore(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(!raw) return;
-    const o = JSON.parse(raw);
-    if(o && Array.isArray(o.emps) && o.emps.length) S.emps = o.emps;
-  }catch(e){ /* bỏ qua: dữ liệu hỏng hoặc trình duyệt chặn storage */ }
+  let idx = null;
+  try{ idx = JSON.parse(lsGet(K_INDEX) || 'null'); }catch(e){ idx = null; }
+
+  /* Chưa có sổ v3 nhưng máy còn dữ liệu bản trước → CHUYỂN ĐỔI, không xoá.
+     Bản v2 để lương/phụ cấp ở cấp nhân viên và chỉ để ngày công/OT/thưởng/
+     tạm ứng trong thang[<kỳ>]; ở đây gộp cả hai vào ảnh chụp của từng kỳ. */
+  if(!idx){
+    let old = null;
+    try{ old = JSON.parse(lsGet(STORE_KEY_V2) || 'null'); }catch(e){ old = null; }
+    if(old && Array.isArray(old.emps) && old.emps.length){
+      const conv = old.emps.filter(e => e && e.id && e.thang).map((e, i) => ({
+        stt:i + 1, id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp,
+        thang: Object.fromEntries(Object.keys(e.thang).map(k => {
+          const t = {};
+          F_HOP_DONG.forEach(f  => { t[f] = Number(e[f]) || 0; });
+          F_BIEN_DONG.forEach(f => { t[f] = Number(e.thang[k][f]) || 0; });
+          return [k, t];
+        }))
+      })).filter(e => Object.keys(e.thang).length);
+      const ids = new Set(conv.flatMap(e => Object.keys(e.thang)));
+      const ms  = MONTHS.filter(m => ids.has(m.id));
+      if(conv.length && ms.length){
+        MONTHS = ms; S.emps = conv; S.month = MONTHS[MONTHS.length - 1].id;
+        persist();
+        lsDel(STORE_KEY_V2);                 // chỉ xoá SAU KHI đã chuyển xong
+        setTimeout(() => toast(`Đã chuyển ${conv.length} nhân sự · ${ms.length} kỳ lương `
+                             + 'từ dữ liệu bản trước sang sổ kỳ kế toán mới.'), 400);
+        return;
+      }
+    }
+  }
+
+  if(!idx || !Array.isArray(idx.periods) || !idx.periods.length) return;
+
+  const months = idx.periods
+    .filter(p => p && p.y >= 2000 && p.m >= 1 && p.m <= 12)
+    .map(p => makePeriod(p.y, p.m, p.ncc))
+    .sort(cmpPeriod);
+  if(!months.length) return;
+
+  const byId = new Map();                    // mã NV → đối tượng nhân viên hợp nhất
+  const kept = [];
+  for(const P of months){
+    let rec = null;
+    try{ rec = JSON.parse(lsGet(K_PERIOD(P.id)) || 'null'); }catch(e){ rec = null; }
+    if(!rec || !Array.isArray(rec.rows) || !rec.rows.length) continue;
+    kept.push(P);
+    for(const r of rec.rows){
+      if(!r || !r.id) continue;
+      let e = byId.get(r.id);
+      if(!e){ e = { stt:byId.size + 1, id:r.id, ten:r.ten, chucVu:r.chucVu, bp:r.bp, thang:{} }; byId.set(r.id, e); }
+      e.ten = r.ten; e.chucVu = r.chucVu; e.bp = r.bp;     // giá trị của kỳ gần nhất
+      const t = {};
+      F_HOP_DONG.concat(F_BIEN_DONG).forEach(k => { t[k] = Number(r[k]) || 0; });
+      e.thang[P.id] = t;
+    }
+  }
+  if(!kept.length || !byId.size) return;     // không có kỳ nào đọc được → giữ dữ liệu mẫu
+
+  MONTHS = kept;
+  S.emps = Array.from(byId.values());
+  S.emps.forEach((e, i) => { e.stt = i + 1; });
+  S.month  = MONTHS.some(m => m.id === idx.month) ? idx.month : MONTHS[MONTHS.length - 1].id;
+  S.dept   = idx.dept || 'ALL';
+  if(S.emps.some(e => e.id === idx.empSel)) S.empSel = idx.empSel;
 })();
 
-function persist(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify({ emps:S.emps })); }
-  catch(e){ /* chế độ riêng tư: không lưu được, ứng dụng vẫn chạy bình thường */ }
+/* ───────────────────────────────────────────────────────────────────────────
+   TẠO / XOÁ KỲ KẾ TOÁN
+   ─────────────────────────────────────────────────────────────────────────── */
+const hasPeriod = pid => MONTHS.some(m => m.id === pid);
+
+/** Kỳ liền trước một mốc (y, m) trong sổ — dùng làm nguồn sao chép. */
+function periodBefore(y, m){
+  let best = null;
+  for(const P of MONTHS) if(cmpPeriod(P, { y, m }) < 0 && (!best || cmpPeriod(P, best) > 0)) best = P;
+  return best;
 }
+
+/**
+ * Mở một kỳ kế toán mới.
+ *   • Sao chép nguyên danh sách nhân sự và các thông số hợp đồng từ kỳ liền
+ *     trước (lương chính, phụ cấp, số NPT, lương đóng BH).
+ *   • Đặt các thông số biến động về 0: ngày công, giờ OT, thưởng, tạm ứng.
+ * Trả về { period, nguon, soNguoi } để giao diện báo lại cho kế toán.
+ */
+function createPeriod(y, m){
+  const pid = periodIdOf(y, m);
+  if(hasPeriod(pid)) return { period: MONTHS.find(p => p.id === pid), nguon:null, soNguoi:0 };
+
+  const src = periodBefore(y, m);
+  const P   = makePeriod(y, m, null);
+  MONTHS = MONTHS.concat([P]).sort(cmpPeriod);
+
+  let n = 0;
+  if(src){
+    for(const e of S.emps){
+      const prev = e.thang[src.id];
+      if(!prev) continue;                       // không có mặt ở kỳ trước → không chép sang
+      const t = {};
+      F_HOP_DONG.forEach(k => { t[k] = prev[k]; });   // giữ nguyên thông số hợp đồng
+      F_BIEN_DONG.forEach(k => { t[k] = 0;      });   // xoá trắng thông số biến động
+      e.thang[pid] = t;
+      n++;
+    }
+  }
+  persist();
+  return { period:P, nguon:src, soNguoi:n };
+}
+
+/** Xoá một kỳ kế toán (và chỉ khoá localStorage của kỳ đó). */
+function deletePeriod(pid){
+  if(MONTHS.length <= 1) return false;
+  MONTHS = MONTHS.filter(m => m.id !== pid);
+  S.emps.forEach(e => { delete e.thang[pid]; });
+  S.emps = S.emps.filter(e => Object.keys(e.thang).length);
+  S.emps.forEach((e, i) => { e.stt = i + 1; });
+  lsDel(K_PERIOD(pid));
+  if(S.month === pid) S.month = MONTHS[MONTHS.length - 1].id;
+  persistIndex();
+  return true;
+}
+
+/* Cửa sổ kỳ lương — sổ có thể dài hàng chục kỳ, nên file Excel và biểu đồ
+   chỉ lấy N kỳ gần nhất tính đến kỳ đang xem. */
+const MAX_EXPORT_PERIODS = 6;    // số sheet bảng lương tối đa trong một file .xlsx
+const MAX_VIEW_PERIODS   = 12;   // số cột tối đa trên biểu đồ diễn biến
+
+function windowTo(pid, n){
+  const i = MONTHS.findIndex(m => m.id === pid);
+  const end = i < 0 ? MONTHS.length : i + 1;
+  return MONTHS.slice(Math.max(0, end - n), end);
+}
+const xPeriods    = () => windowTo(S.month, MAX_EXPORT_PERIODS);
+const viewPeriods = () => windowTo(S.month, MAX_VIEW_PERIODS);
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PHẦN 4 · ENGINE TÍNH LƯƠNG
@@ -631,23 +925,32 @@ function thueLuyTien(tntt){
   return 0;
 }
 
+/** Ảnh chụp hồ sơ nhân sự tại một kỳ lương (rỗng nếu không có mặt kỳ đó). */
+const EMPTY_SNAP = Object.freeze(Object.fromEntries(F_HOP_DONG.concat(F_BIEN_DONG).map(k => [k, 0])));
+const snap = (e, monthId) => e.thang[monthId] || EMPTY_SNAP;
+
 /** Tính toàn bộ chỉ tiêu lương của một nhân viên trong một kỳ lương. */
 function calc(e, monthId){
-  const M = MONTHS.find(m => m.id === monthId);
-  const t = e.thang[monthId];
-  const ncc = M.ncc, nc = t.ngayCong, tyLe = nc / ncc;
+  const M = MONTHS.find(m => m.id === monthId) || MONTHS[MONTHS.length - 1];
+  const t = snap(e, monthId);
+  const ncc = M.ncc, nc = t.ngayCong, tyLe = ncc ? nc / ncc : 0;
 
   /* --- Thu nhập --- */
-  const tongPhuCap     = e.pcTrachNhiem + e.pcAnTrua + e.pcDienThoai + e.pcXangXe;
-  const luongTheoCong  = R((e.luongChinh + tongPhuCap) / ncc * nc);
-  const donGiaGio      = e.luongChinh / (ncc * 8);
+  const tongPhuCap     = t.pcTrachNhiem + t.pcAnTrua + t.pcDienThoai + t.pcXangXe;
+  const luongTheoCong  = ncc ? R((t.luongChinh + tongPhuCap) / ncc * nc) : 0;
+  const donGiaGio      = ncc ? t.luongChinh / (ncc * 8) : 0;
   const tienOT         = R(donGiaGio * t.otGio * K.HS_OT);
   const tongThuNhap    = luongTheoCong + tienOT + t.thuong;
 
   /* --- Căn cứ đóng bảo hiểm: kẹp giữa sàn và trần --- */
-  const canCuXHYT = Math.min(Math.max(e.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHXH);
-  const canCuTN   = Math.min(Math.max(e.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHTN);
-  const capped    = e.luongBH > K.TRAN_BHXH;
+  /* Nghỉ không hưởng lương từ 14 ngày công trở lên trong tháng thì tháng đó
+     không đóng BHXH (Điều 42 QĐ 595/QĐ-BHXH). Nhờ quy tắc này, một kỳ lương
+     vừa mở (ngày công = 0) cho kết quả bằng 0 thay vì thực lĩnh âm. */
+  const ngayNghi  = Math.max(ncc - nc, 0);
+  const dongBH    = ngayNghi < K.NGAY_NGHI_MIEN_BH;
+  const canCuXHYT = dongBH ? Math.min(Math.max(t.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHXH) : 0;
+  const canCuTN   = dongBH ? Math.min(Math.max(t.luongBH, K.MUC_THAM_CHIEU), K.TRAN_BHTN) : 0;
+  const capped    = dongBH && t.luongBH > K.TRAN_BHXH;
 
   const bhxhNLD = R(canCuXHYT * K.BHXH_NLD);
   const bhytNLD = R(canCuXHYT * K.BHYT_NLD);
@@ -661,16 +964,16 @@ function calc(e, monthId){
   const bhDN   = bhxhDN + bhytDN + bhtnDN + kpcd;
 
   /* --- Thu nhập miễn thuế --- */
-  const anTruaTT   = R(e.pcAnTrua * tyLe);
+  const anTruaTT   = R(t.pcAnTrua * tyLe);
   const mienAnTrua = Math.min(anTruaTT, K.MAX_AN_TRUA);
-  const mienDT     = R(e.pcDienThoai * tyLe) * K.MIEN_DIEN_THOAI;
-  const mienXX     = R(e.pcXangXe   * tyLe) * K.MIEN_XANG_XE;
+  const mienDT     = R(t.pcDienThoai * tyLe) * K.MIEN_DIEN_THOAI;
+  const mienXX     = R(t.pcXangXe   * tyLe) * K.MIEN_XANG_XE;
   const mienOT     = R(donGiaGio * t.otGio * (K.HS_OT - 1));   // phần trả cao hơn giờ thường
   const tongMien   = mienAnTrua + mienDT + mienXX + mienOT;
 
   /* --- Thuế TNCN --- */
   const tnChiuThue  = tongThuNhap - tongMien;
-  const giamTruGC   = K.GTGC_BAN_THAN + K.GTGC_NPT * e.npt;
+  const giamTruGC   = K.GTGC_BAN_THAN + K.GTGC_NPT * t.npt;
   const tongGiamTru = giamTruGC + bhNLD;
   const tntt        = Math.max(tnChiuThue - tongGiamTru, 0);
   const thueTNCN    = thueLuyTien(tntt);
@@ -680,7 +983,11 @@ function calc(e, monthId){
   const chiPhiDN = tongThuNhap + bhDN;
 
   return {
-    ncc, nc, otGio:t.otGio, thuong:t.thuong, tamUng:t.tamUng,
+    /* ảnh chụp hồ sơ của kỳ này — để phiếu lương và bảng diễn giải dùng lại */
+    luongChinh:t.luongChinh, pcTrachNhiem:t.pcTrachNhiem, pcAnTrua:t.pcAnTrua,
+    pcDienThoai:t.pcDienThoai, pcXangXe:t.pcXangXe, npt:t.npt, luongBH:t.luongBH,
+    coMat: !!e.thang[monthId],
+    ncc, nc, tyLe, ngayNghi, dongBH, otGio:t.otGio, thuong:t.thuong, tamUng:t.tamUng,
     tongPhuCap, luongTheoCong, donGiaGio, tienOT, tongThuNhap,
     canCuXHYT, canCuTN, capped, bhxhNLD, bhytNLD, bhtnNLD, bhNLD,
     bhxhDN, bhytDN, bhtnDN, kpcd, bhDN,
@@ -690,8 +997,13 @@ function calc(e, monthId){
   };
 }
 
-/* --- Tổng hợp --- */
-const empsOf = d => d === 'ALL' ? S.emps : S.emps.filter(e => e.bp === d);
+/* --- Tổng hợp ---
+   Nhân sự của một kỳ = những người CÓ MẶT trong kỳ đó. Người vào làm từ
+   tháng 9 sẽ không xuất hiện ngược ở bảng lương tháng 6, và người đã nghỉ
+   vẫn còn nguyên trên các kỳ họ từng làm việc. */
+const empsIn = (pid, d) =>
+  S.emps.filter(e => e.thang[pid] && (d === 'ALL' || !d || e.bp === d));
+const empsOf = d => empsIn(S.month, d);
 
 function totals(list, monthId){
   const z = { n:list.length, luongChinh:0, tongPhuCap:0, luongTheoCong:0, tienOT:0, thuong:0,
@@ -699,7 +1011,7 @@ function totals(list, monthId){
               chiPhiDN:0, nc:0, otGio:0, npt:0 };
   for(const e of list){
     const c = calc(e, monthId);
-    z.luongChinh += e.luongChinh; z.npt += e.npt;
+    z.luongChinh += c.luongChinh; z.npt += c.npt;
     z.tongPhuCap += c.tongPhuCap; z.luongTheoCong += c.luongTheoCong;
     z.tienOT += c.tienOT; z.thuong += c.thuong; z.tongThuNhap += c.tongThuNhap;
     z.bhNLD += c.bhNLD; z.bhDN += c.bhDN; z.kpcd += c.kpcd;
@@ -721,6 +1033,11 @@ function totals(list, monthId){
    • f(r)   : công thức Excel cho dòng r  →  hiện trên thanh fx và ghi vào .xlsx
    • g      : nhóm cột (bật/tắt trên giao diện)
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Căn cứ đóng bảo hiểm trong Excel — dùng chung cho cả 7 dòng bảo hiểm.
+   IF(...) ở ngoài chính là quy tắc "nghỉ ≥ 14 ngày công thì tháng đó không đóng". */
+const CC_XHYT = r => `IF(M${r}-N${r}>=NGAY_NGHI_MIEN_BH,0,MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH))`;
+const CC_BHTN = r => `IF(M${r}-N${r}>=NGAY_NGHI_MIEN_BH,0,MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHTN))`;
+
 const FIRST_ROW = 7;     // dòng dữ liệu đầu tiên trên sheet Excel
 const HEAD_BAND = 5;     // dòng tiêu đề gộp
 const HEAD_ROW  = 6;     // dòng tên cột
@@ -731,13 +1048,13 @@ const COLS = [
  {L:'C', k:'ten',    vi:'Họ và tên',   en:'Full name',  g:'id', t:'txt', w:172, get:e=>e.ten, text:true},
  {L:'D', k:'chucVu', vi:'Chức vụ',     en:'Position',   g:'id', t:'txt', w:158, get:e=>e.chucVu, text:true},
  {L:'E', k:'bp',     vi:'Bộ phận',     en:'Dept.',      g:'id', t:'ctr', w:56,  get:e=>e.bp, text:true},
- {L:'F', k:'npt',    vi:'Số NPT',      en:'Depend.',    g:'id', t:'ctr', w:52,  inp:'npt', plain:true},
- {L:'G', k:'luongChinh', vi:'Lương chính', en:'Base salary', g:'id', w:104, inp:'luongChinh'},
+ {L:'F', k:'npt',    vi:'Số NPT',      en:'Depend.',    g:'id', t:'ctr', w:52,  inp:'npt', month:true, plain:true},
+ {L:'G', k:'luongChinh', vi:'Lương chính', en:'Base salary', g:'id', w:104, inp:'luongChinh', month:true},
 
- {L:'H', k:'pcTrachNhiem', vi:'Trách nhiệm', en:'Responsibility', g:'allow', w:92, inp:'pcTrachNhiem'},
- {L:'I', k:'pcAnTrua',     vi:'Ăn trưa',     en:'Meal',           g:'allow', w:78, inp:'pcAnTrua'},
- {L:'J', k:'pcDienThoai',  vi:'Điện thoại',  en:'Phone',          g:'allow', w:82, inp:'pcDienThoai'},
- {L:'K', k:'pcXangXe',     vi:'Xăng xe',     en:'Fuel',           g:'allow', w:80, inp:'pcXangXe'},
+ {L:'H', k:'pcTrachNhiem', vi:'Trách nhiệm', en:'Responsibility', g:'allow', w:92, inp:'pcTrachNhiem', month:true},
+ {L:'I', k:'pcAnTrua',     vi:'Ăn trưa',     en:'Meal',           g:'allow', w:78, inp:'pcAnTrua', month:true},
+ {L:'J', k:'pcDienThoai',  vi:'Điện thoại',  en:'Phone',          g:'allow', w:82, inp:'pcDienThoai', month:true},
+ {L:'K', k:'pcXangXe',     vi:'Xăng xe',     en:'Fuel',           g:'allow', w:80, inp:'pcXangXe', month:true},
  {L:'L', k:'tongPhuCap',   vi:'Tổng phụ cấp',en:'Total allowances',g:'allow',w:98,
    get:(e,c)=>c.tongPhuCap, f:r=>`=SUM(H${r}:K${r})`},
 
@@ -754,13 +1071,13 @@ const COLS = [
  {L:'S', k:'tongThuNhap', vi:'TỔNG THU NHẬP', en:'Gross pay', g:'id', w:112, bold:true,
    get:(e,c)=>c.tongThuNhap, f:r=>`=O${r}+Q${r}+R${r}`},
 
- {L:'T', k:'luongBH',  vi:'Lương đóng BH', en:'SI base', g:'ins', w:104, inp:'luongBH'},
+ {L:'T', k:'luongBH',  vi:'Lương đóng BH', en:'SI base', g:'ins', w:104, inp:'luongBH', month:true},
  {L:'U', k:'bhxhNLD',  vi:'BHXH 8%',   en:'SI 8%',   g:'ins', w:84, neg:true,
-   get:(e,c)=>c.bhxhNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHXH_NLD,0)`},
+   get:(e,c)=>c.bhxhNLD, f:r=>`=ROUND(${CC_XHYT(r)}*BHXH_NLD,0)`},
  {L:'V', k:'bhytNLD',  vi:'BHYT 1,5%', en:'HI 1.5%', g:'ins', w:80, neg:true,
-   get:(e,c)=>c.bhytNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHYT_NLD,0)`},
+   get:(e,c)=>c.bhytNLD, f:r=>`=ROUND(${CC_XHYT(r)}*BHYT_NLD,0)`},
  {L:'W', k:'bhtnNLD',  vi:'BHTN 1%',   en:'UI 1%',   g:'ins', w:76, neg:true,
-   get:(e,c)=>c.bhtnNLD, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHTN)*BHTN_NLD,0)`},
+   get:(e,c)=>c.bhtnNLD, f:r=>`=ROUND(${CC_BHTN(r)}*BHTN_NLD,0)`},
  {L:'X', k:'bhNLD',    vi:'Cộng BH trừ vào lương', en:'Employee SI total', g:'ins', w:104, neg:true, bold:true,
    get:(e,c)=>c.bhNLD, f:r=>`=SUM(U${r}:W${r})`},
 
@@ -785,13 +1102,13 @@ const COLS = [
    get:(e,c)=>c.thucLinh, f:r=>`=S${r}-X${r}-AC${r}-AD${r}`},
 
  {L:'AF', k:'bhxhDN', vi:'BHXH 17,5%', en:'SI 17.5%', g:'emp', w:92, emp:true,
-   get:(e,c)=>c.bhxhDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHXH_DN,0)`},
+   get:(e,c)=>c.bhxhDN, f:r=>`=ROUND(${CC_XHYT(r)}*BHXH_DN,0)`},
  {L:'AG', k:'bhytDN', vi:'BHYT 3%', en:'HI 3%', g:'emp', w:82, emp:true,
-   get:(e,c)=>c.bhytDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*BHYT_DN,0)`},
+   get:(e,c)=>c.bhytDN, f:r=>`=ROUND(${CC_XHYT(r)}*BHYT_DN,0)`},
  {L:'AH', k:'bhtnDN', vi:'BHTN 1%', en:'UI 1%', g:'emp', w:76, emp:true,
-   get:(e,c)=>c.bhtnDN, f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHTN)*BHTN_DN,0)`},
+   get:(e,c)=>c.bhtnDN, f:r=>`=ROUND(${CC_BHTN(r)}*BHTN_DN,0)`},
  {L:'AI', k:'kpcd',   vi:'KPCĐ 2%', en:'Union 2%', g:'emp', w:80, emp:true,
-   get:(e,c)=>c.kpcd,   f:r=>`=ROUND(MIN(MAX(T${r},MUC_THAM_CHIEU),TRAN_BHXH)*KPCD,0)`},
+   get:(e,c)=>c.kpcd,   f:r=>`=ROUND(${CC_XHYT(r)}*KPCD,0)`},
  {L:'AJ', k:'chiPhiDN', vi:'TỔNG CHI PHÍ DN', en:'Total employer cost', g:'emp', w:122, bold:true, emp:true,
    get:(e,c)=>c.chiPhiDN, f:r=>`=S${r}+SUM(AF${r}:AI${r})`}
 ];
@@ -821,7 +1138,7 @@ const visCols = () => COLS.filter(c => c.g === 'id' || S.cols[c.g]);
 
 /** Giá trị của một cột cho một nhân viên (dùng chung cho giao diện và Excel). */
 function cellValue(col, e, c){
-  if(col.inp) return col.month ? e.thang[S.month][col.inp] : e[col.inp];
+  if(col.inp) return snap(e, S.month)[col.inp];   // mọi ô nhập tay đều thuộc về một kỳ
   return col.get ? col.get(e, c) : '';
 }
 
@@ -836,7 +1153,7 @@ function buildSheetModel(monthId, deptId){
   let r = FIRST_ROW;
 
   for(const g of groups){
-    const list = S.emps.filter(e => e.bp === g.id);
+    const list = empsIn(monthId, g.id);
     if(!list.length) continue;
     rows.push({ type:'group', dept:g, count:list.length, row:r++ });
     const from = r;
@@ -844,11 +1161,18 @@ function buildSheetModel(monthId, deptId){
     rows.push({ type:'subtotal', dept:g, from, to:r-1, row:r++ });
   }
   const empRows = rows.filter(x => x.type === 'emp').map(x => x.row);
+
+  /* Kỳ chưa có nhân sự nào: nếu để dòng TỔNG CỘNG ngay tại dòng 7 thì dải ô
+     cộng thành 7:6 — Excel đảo lại thành 6:7, ôm cả dòng tiêu đề LẪN chính nó
+     ⇒ lỗi tham chiếu vòng. Chừa một dòng trống ở 7 để dải ô luôn hợp lệ. */
+  const rong = !empRows.length;
+  if(rong){ rows.push({ type:'blank', row:r++ }); }
+
   const totalRow = r;
-  rows.push({ type:'total', from:FIRST_ROW, to:r-1, row:r++ });
+  rows.push({ type:'total', from:FIRST_ROW, to:totalRow - 1, row:r++ });
 
   return {
-    rows, totalRow,
+    rows, totalRow, rong,
     month: MONTHS.find(m => m.id === monthId),
     firstRow: FIRST_ROW,
     lastRow: totalRow - 1,
@@ -1247,7 +1571,9 @@ function sheetBangLuong(monthId, active){
   /* Thân bảng */
   for(const row of model.rows){
     const arr = [];
-    if(row.type === 'group'){
+    if(row.type === 'blank'){
+      continue;                       // kỳ rỗng: chừa nguyên dòng trống, không ghi gì
+    } else if(row.type === 'group'){
       COLS.forEach(c => { arr[colIndex(c.L) - 1] = { v:'', s:ST.GROUP }; });
       at(arr, 'C', { v:`${row.dept.vi}  (${row.dept.en}) — ${row.count} nhân viên`, s:ST.GROUP });
       merges.push(`C${row.row}:${LAST_COL}${row.row}`);
@@ -1381,10 +1707,11 @@ function sheetPhieuLuong(monthId, empId, sheetName){
 
 /* ---------- Sheet báo cáo (toàn công ty + phòng ban) ---------- */
 function sheetBaoCao(monthId){
+  const PS = xPeriods();          // các kỳ được đưa vào file này
   const rows = [];
   const put = (r, arr) => { rows[r - 1] = arr; };
   const merges = [];
-  const models = Object.fromEntries(MONTHS.map(m => [m.id, buildSheetModel(m.id, 'ALL')]));
+  const models = Object.fromEntries(PS.map(m => [m.id, buildSheetModel(m.id, 'ALL')]));
   const rng = (m, L) => { const md = models[m.id]; return `${m.sheet}!$${L}$${md.firstRow}:$${L}$${md.lastRow}`; };
   const sub = (m, L) => `SUBTOTAL(9,${rng(m, L)})`;
   const sif = (m, L, cellA) => `SUMIF(${rng(m, 'E')},${cellA},${rng(m, L)})`;
@@ -1399,7 +1726,7 @@ function sheetBaoCao(monthId){
                'BH người LĐ đóng','Thuế TNCN','Tổng thực lĩnh','DN đóng BH + KPCĐ',
                'Tổng chi phí DN','Chi phí BQ/người'];
   put(5, hdA.map(v => ({ v, s:ST.HEADER })));
-  MONTHS.forEach((m, i) => {
+  PS.forEach((m, i) => {
     const r = 6 + i, md = models[m.id];
     put(r, [
       { v:m.vi, s:ST.TEXT_B },
@@ -1417,8 +1744,8 @@ function sheetBaoCao(monthId){
   });
 
   /* B. So sánh phòng ban — kỳ đang chọn */
-  const M = MONTHS.find(m => m.id === monthId);
-  const rB = 6 + MONTHS.length + 1;
+  const M = PS.find(m => m.id === monthId) || PS[PS.length - 1];
+  const rB = 6 + PS.length + 1;
   put(rB, [{ v:`B. SO SÁNH PHÒNG BAN — ${M.vi}`, s:ST.TEXT_B }]);
   const hdB = ['Mã BP','Phòng ban','Số người','Quỹ lương gross','BH người LĐ đóng','Thuế TNCN',
                'Tổng thực lĩnh','DN đóng BH + KPCĐ','Tổng chi phí DN','Chi phí BQ/người','% tổng chi phí'];
@@ -1451,25 +1778,27 @@ function sheetBaoCao(monthId){
   const rC = rBT + 2;
   put(rC, [{ v:'C. TỔNG CHI PHÍ DOANH NGHIỆP THEO PHÒNG BAN QUA CÁC KỲ LƯƠNG', s:ST.TEXT_B }]);
   put(rC + 1, [{ v:'Mã BP', s:ST.HEADER }, { v:'Phòng ban', s:ST.HEADER },
-               ...MONTHS.map(m => ({ v:m.vi, s:ST.HEADER })),
-               { v:'Chênh lệch kỳ cuối', s:ST.HEADER }, { v:'% thay đổi', s:ST.HEADER }]);
-  const rC0 = rC + 2, nM = MONTHS.length;
+               ...PS.map(m => ({ v:m.vi, s:ST.HEADER })),
+               ...(PS.length >= 2 ? [{ v:'Chênh lệch kỳ cuối', s:ST.HEADER }, { v:'% thay đổi', s:ST.HEADER }] : [])]);
+  const rC0 = rC + 2, nM = PS.length, coDelta = nM >= 2;
   const Lm = i => colLetter(3 + i);                  // C, D, E… cho từng kỳ lương
   DEPTS.forEach((d, i) => {
     const r = rC0 + i;
-    const last = Lm(nM - 1), prev = Lm(nM - 2);
+    const last = Lm(nM - 1), prev = coDelta ? Lm(nM - 2) : null;
     put(r, [
       { v:d.id, s:ST.CENTER }, { v:d.vi, s:ST.TEXT },
-      ...MONTHS.map(m => ({ v:'', f:sif(m, 'AJ', `$A${r}`), s:ST.MONEY })),
-      { v:'', f:`${last}${r}-${prev}${r}`, s:ST.MONEY },
-      { v:'', f:`IFERROR(${last}${r}/${prev}${r}-1,0)`, s:ST.PCT }
+      ...PS.map(m => ({ v:'', f:sif(m, 'AJ', `$A${r}`), s:ST.MONEY })),
+      ...(coDelta ? [
+        { v:'', f:`${last}${r}-${prev}${r}`, s:ST.MONEY },
+        { v:'', f:`IFERROR(${last}${r}/${prev}${r}-1,0)`, s:ST.PCT }] : [])
     ]);
   });
   const rCT = rC0 + DEPTS.length;
   put(rCT, [{ v:'', s:ST.TOT_TEXT }, { v:'TỔNG CỘNG', s:ST.TOT_TEXT },
-    ...MONTHS.map((m, i) => ({ v:'', f:`SUM(${Lm(i)}${rC0}:${Lm(i)}${rCT - 1})`, s:ST.TOT_MONEY })),
-    { v:'', f:`SUM(${Lm(nM)}${rC0}:${Lm(nM)}${rCT - 1})`, s:ST.TOT_MONEY },
-    { v:'', f:`IFERROR(${Lm(nM - 1)}${rCT}/${Lm(nM - 2)}${rCT}-1,0)`, s:ST.PCT }]);
+    ...PS.map((m, i) => ({ v:'', f:`SUM(${Lm(i)}${rC0}:${Lm(i)}${rCT - 1})`, s:ST.TOT_MONEY })),
+    ...(coDelta ? [
+      { v:'', f:`SUM(${Lm(nM)}${rC0}:${Lm(nM)}${rCT - 1})`, s:ST.TOT_MONEY },
+      { v:'', f:`IFERROR(${Lm(nM - 1)}${rCT}/${Lm(nM - 2)}${rCT}-1,0)`, s:ST.PCT }] : [])]);
 
   put(rCT + 2, [{ v:'Lưu ý: báo cáo chỉ tổng hợp ở cấp công ty và phòng ban — không xếp hạng hay so sánh giữa các cá nhân.', s:ST.SUBTITLE }]);
 
@@ -1483,13 +1812,18 @@ function sheetBaoCao(monthId){
 function exportWorkbook(){
   const sheets = [
     sheetThamSo(),
-    ...MONTHS.map(m => sheetBangLuong(m.id, m.id === S.month)),
+    ...xPeriods().map(m => sheetBangLuong(m.id, m.id === S.month)),
     sheetPhieuLuong(S.month, S.empSel),
     sheetBaoCao(S.month)
   ];
   downloadBlob(buildXlsxBlob(sheets, DEFINED_NAMES),
     `BangLuong_${COMPANY.ten.split(' ').slice(-2).join('')}_${S.month}.xlsx`);
-  toast('Đã tạo workbook: ThamSo · 3 kỳ bảng lương · PhieuLuong · BaoCao. Mọi ô tính toán đều giữ công thức.');
+  const ps = xPeriods();
+  toast(`Đã tạo workbook: ThamSo · ${ps.length} kỳ bảng lương (${ps[0].vi} → ${ps[ps.length - 1].vi}) · `
+      + `PhieuLuong · BaoCao. Mọi ô tính toán đều giữ công thức.`
+      + (MONTHS.length > ps.length
+          ? ` Sổ có ${MONTHS.length} kỳ; file chỉ lấy ${MAX_EXPORT_PERIODS} kỳ gần nhất tính đến kỳ đang xem.`
+          : ''));
 }
 
 function exportPayslip(empId){
@@ -1501,7 +1835,7 @@ function exportPayslip(empId){
 }
 
 function exportDeptPayslips(bp){
-  const list = S.emps.filter(x => x.bp === bp);
+  const list = empsIn(S.month, bp);
   const sheets = [sheetThamSo(), sheetBangLuong(S.month, false)];
   list.forEach(e => sheets.push(sheetPhieuLuong(S.month, e.id, 'PL_' + e.id)));
   downloadBlob(buildXlsxBlob(sheets, DEFINED_NAMES), `PhieuLuong_${bp}_${S.month}.xlsx`);
@@ -1515,9 +1849,11 @@ function exportDeptPayslips(bp){
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const nf = new Intl.NumberFormat('vi-VN');
-const fm  = n => (Math.round(n) === 0 ? '–' : nf.format(Math.round(n)));
-const fmM = n => (n / 1e6).toFixed(Math.abs(n) >= 100e6 ? 0 : 1).replace('.', ',') + ' tr';
-const pct = (n, d = 1) => (n * 100).toFixed(d).replace('.', ',') + '%';
+/* Kỳ lương vừa mở toàn số 0 → mọi hàm định dạng phải chịu được NaN / vô cực. */
+const fm  = n => (!isFinite(n) || Math.round(n) === 0 ? '–' : nf.format(Math.round(n)));
+const fmM = n => (!isFinite(n) ? '–' : (n / 1e6).toFixed(Math.abs(n) >= 100e6 ? 0 : 1).replace('.', ',') + ' tr');
+/* Kỳ mới có thể toàn số 0 → mọi phép chia cho kỳ trước phải an toàn. */
+const pct = (n, d = 1) => (isFinite(n) ? (n * 100).toFixed(d).replace('.', ',') + '%' : '—');
 const esc = s => String(s).replace(/[&<>"]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
 const monthObj = () => MONTHS.find(m => m.id === S.month);
 const monthIdx = id => MONTHS.findIndex(m => m.id === id);
@@ -1570,6 +1906,274 @@ function tile(label, en, value, prev, cls, unit, fmtFn){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 9B · DIỄN GIẢI CÔNG THỨC BẰNG LỜI  (chống "hộp đen")
+   ---------------------------------------------------------------------------
+   Mỗi ô kết quả trên bảng lương và phiếu lương đều nói được nó từ đâu ra.
+   EXPLAIN[<khoá cột>] (e, c, P) → {
+     title, en,                        tên chỉ tiêu
+     res,                              con số cuối cùng
+     parts:[{op,lbl,en,v}],            các thành phần cấu thành
+     note                              căn cứ pháp lý / cách hiểu, bằng tiếng Việt
+   }
+   Câu tóm tắt ở đầu popover được sinh tự động từ parts, đúng dạng:
+     Thực lĩnh (46.960.908) = Tổng thu nhập (53.289.231) − Cộng BH (5.046.000)
+                            − Thuế TNCN (1.282.323) − Tạm ứng (0)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const n0 = v => nf.format(Math.round(v || 0));
+const P_ = (op, lbl, en, v) => ({ op, lbl, en, v });
+
+/** Căn cứ đóng bảo hiểm sau khi kẹp sàn/trần — dùng lại cho 7 dòng bảo hiểm. */
+function canCuNote(c, tran, tenTran){
+  if(!c.dongBH)
+    return `Kỳ này nghỉ ${c.ngayNghi} ngày công (từ ${K.NGAY_NGHI_MIEN_BH} ngày trở lên) nên tháng này `
+         + 'không đóng bảo hiểm — theo Điều 42 Quyết định 595/QĐ-BHXH. Căn cứ đóng vì vậy bằng 0.';
+  if(c.luongBH > tran)
+    return `Lương đóng BH ${n0(c.luongBH)} đ vượt ${tenTran} ${n0(tran)} đ nên chỉ đóng trên mức trần.`;
+  if(c.luongBH < K.MUC_THAM_CHIEU)
+    return `Lương đóng BH thấp hơn mức tham chiếu ${n0(K.MUC_THAM_CHIEU)} đ nên lấy bằng mức tham chiếu.`;
+  return `Lương đóng BH ${n0(c.luongBH)} đ nằm trong khoảng sàn – trần nên đóng đúng trên mức này.`;
+}
+
+/** Dòng bảo hiểm: căn cứ × tỷ lệ. */
+function xpBH(title, en, ty, cc, res, tran, tenTran, c, note){
+  return {
+    title, en, res,
+    parts:[ P_(null, 'Căn cứ đóng', 'Contribution base', cc),
+            P_('×', `Tỷ lệ ${pct(ty, ty * 100 % 1 ? 1 : 0)}`, 'Rate', null) ],
+    note: canCuNote(c, tran, tenTran) + (note ? ' ' + note : '')
+  };
+}
+
+const EXPLAIN = {
+  ncc: (e, c, P) => ({
+    title:'Ngày công chuẩn', en:'Standard working days', res:c.ncc, plain:true,
+    parts:[ P_(null, `Số ngày làm việc của ${P.vi}`, 'Working days in period', c.ncc) ],
+    note:'Khai báo một lần cho cả kỳ (ô D4 trên sheet Excel). Mặc định là số ngày thứ Hai đến thứ Sáu '
+       + 'trong tháng; sửa lại nếu doanh nghiệp áp dụng chế độ khác hoặc kỳ có ngày lễ.'
+  }),
+
+  tongPhuCap: (e, c) => ({
+    title:'Tổng phụ cấp', en:'Total allowances', res:c.tongPhuCap,
+    parts:[ P_(null,'Phụ cấp trách nhiệm','Responsibility',c.pcTrachNhiem),
+            P_('+','Phụ cấp ăn trưa','Meal',c.pcAnTrua),
+            P_('+','Phụ cấp điện thoại','Phone',c.pcDienThoai),
+            P_('+','Phụ cấp xăng xe','Fuel',c.pcXangXe) ],
+    note:'Đây là mức phụ cấp theo hợp đồng cho một tháng đủ công. Phần thực trả được tính theo ngày công ở cột Lương theo ngày công.'
+  }),
+
+  luongTheoCong: (e, c) => ({
+    title:'Lương theo ngày công', en:'Pro-rated pay', res:c.luongTheoCong,
+    parts:[ P_(null,'Lương chính','Base salary',c.luongChinh),
+            P_('+','Tổng phụ cấp','Allowances',c.tongPhuCap),
+            P_('÷',`Ngày công chuẩn (${c.ncc})`,'Standard days',null),
+            P_('×',`Ngày công thực tế (${c.nc})`,'Actual days',null) ],
+    note:`Đi làm ${c.nc}/${c.ncc} ngày, tương ứng ${pct(c.tyLe)} mức lương và phụ cấp trọn tháng. `
+       + 'Kết quả được làm tròn đến đồng.'
+  }),
+
+  tienOT: (e, c) => ({
+    title:'Tiền làm thêm giờ', en:'Overtime pay', res:c.tienOT,
+    parts:[ P_(null,'Lương chính','Base salary',c.luongChinh),
+            P_('÷',`Ngày công chuẩn × 8 giờ (${c.ncc} × 8)`,'Standard hours',null),
+            P_('×',`Số giờ làm thêm (${c.otGio} giờ)`,'OT hours',null),
+            P_('×',`Hệ số ${String(K.HS_OT).replace('.', ',')} (150%)`,'OT factor',null) ],
+    note:'Đơn giá giờ công bình thường = lương chính ÷ (ngày công chuẩn × 8). Bộ luật Lao động quy định '
+       + 'làm thêm ngày thường trả ít nhất 150%. Bản này mới hỗ trợ một hệ số 150%; '
+       + 'làm thêm ngày nghỉ hằng tuần (200%) và ngày lễ (300%) cần khai riêng.'
+  }),
+
+  tongThuNhap: (e, c) => ({
+    title:'TỔNG THU NHẬP', en:'Gross pay', res:c.tongThuNhap,
+    parts:[ P_(null,'Lương theo ngày công','Pro-rated pay',c.luongTheoCong),
+            P_('+','Tiền làm thêm giờ','Overtime pay',c.tienOT),
+            P_('+','Thưởng','Bonus',c.thuong) ],
+    note:'Là thu nhập gộp trước mọi khoản khấu trừ — cũng là gốc để tính chi phí doanh nghiệp.'
+  }),
+
+  bhxhNLD: (e, c) => xpBH('BHXH người lao động đóng','Employee social insurance', K.BHXH_NLD,
+    c.canCuXHYT, c.bhxhNLD, K.TRAN_BHXH, 'trần BHXH', c,
+    'Người lao động đóng 8% vào quỹ hưu trí và tử tuất.'),
+  bhytNLD: (e, c) => xpBH('BHYT người lao động đóng','Employee health insurance', K.BHYT_NLD,
+    c.canCuXHYT, c.bhytNLD, K.TRAN_BHXH, 'trần BHYT', c,
+    'Bảo hiểm y tế: người lao động 1,5%, doanh nghiệp 3%.'),
+  bhtnNLD: (e, c) => xpBH('BHTN người lao động đóng','Employee unemployment insurance', K.BHTN_NLD,
+    c.canCuTN, c.bhtnNLD, K.TRAN_BHTN, 'trần BHTN', c,
+    `Bảo hiểm thất nghiệp có trần riêng bằng 20 lần lương tối thiểu vùng (${n0(K.TRAN_BHTN)} đ), khác trần BHXH/BHYT.`),
+
+  bhNLD: (e, c) => ({
+    title:'Cộng bảo hiểm trừ vào lương', en:'Employee contributions', res:c.bhNLD,
+    parts:[ P_(null,'BHXH 8%','SI 8%',c.bhxhNLD),
+            P_('+','BHYT 1,5%','HI 1.5%',c.bhytNLD),
+            P_('+','BHTN 1%','UI 1%',c.bhtnNLD) ],
+    note: c.dongBH
+      ? 'Tổng 10,5% trên tiền lương đóng bảo hiểm. Khoản này vừa bị trừ vào lương, '
+        + 'vừa được giảm trừ khi tính thuế thu nhập cá nhân.'
+      : `Kỳ này nghỉ ${c.ngayNghi} ngày công (từ ${K.NGAY_NGHI_MIEN_BH} ngày trở lên) nên không đóng bảo hiểm `
+        + 'tháng này, theo Điều 42 Quyết định 595/QĐ-BHXH.'
+  }),
+
+  tongMien: (e, c) => ({
+    title:'Thu nhập miễn thuế', en:'Tax-exempt income', res:c.tongMien,
+    parts:[ P_(null, c.anTruaTT > K.MAX_AN_TRUA
+                 ? `Ăn trưa (${n0(c.anTruaTT)}, vượt trần → lấy ${n0(K.MAX_AN_TRUA)})`
+                 : 'Tiền ăn giữa ca', 'Meal allowance', c.mienAnTrua),
+            P_('+', K.MIEN_DIEN_THOAI ? 'Khoán điện thoại' : 'Khoán điện thoại (không miễn)', 'Phone', c.mienDT),
+            P_('+', K.MIEN_XANG_XE ? 'Khoán xăng xe' : 'Khoán xăng xe (không miễn)', 'Fuel', c.mienXX),
+            P_('+','Phần làm thêm trả cao hơn giờ thường','OT premium',c.mienOT) ],
+    note:`Tiền ăn giữa ca được miễn thuế tối đa ${n0(K.MAX_AN_TRUA)} đ/tháng. Phần tiền làm thêm trả `
+       + 'CAO HƠN đơn giá giờ bình thường (phần 50% chênh lệch) được miễn thuế; phần bằng giờ thường vẫn chịu thuế. '
+       + 'Khoán điện thoại/xăng xe miễn hay không tuỳ quy chế nội bộ — khai ở hằng số MIEN_DIEN_THOAI, MIEN_XANG_XE.'
+  }),
+
+  tnChiuThue: (e, c) => ({
+    title:'Thu nhập chịu thuế', en:'Taxable income', res:c.tnChiuThue,
+    parts:[ P_(null,'Tổng thu nhập','Gross pay',c.tongThuNhap),
+            P_('−','Thu nhập miễn thuế','Tax-exempt',c.tongMien) ],
+    note:'Là phần thu nhập đưa vào diện tính thuế, trước khi trừ giảm trừ gia cảnh và bảo hiểm.'
+  }),
+
+  tongGiamTru: (e, c) => ({
+    title:'Tổng giảm trừ', en:'Total deductions', res:c.tongGiamTru,
+    parts:[ P_(null,'Giảm trừ bản thân','Personal relief',K.GTGC_BAN_THAN),
+            P_('+',`Giảm trừ ${c.npt} người phụ thuộc × ${n0(K.GTGC_NPT)}`,'Dependant relief',K.GTGC_NPT * c.npt),
+            P_('+','Bảo hiểm bắt buộc đã đóng','Compulsory insurance',c.bhNLD) ],
+    note:`Nghị quyết 110/2025/UBTVQH15: giảm trừ bản thân ${n0(K.GTGC_BAN_THAN)} đ/tháng, mỗi người phụ thuộc `
+       + `${n0(K.GTGC_NPT)} đ/tháng. Người phụ thuộc phải được đăng ký với cơ quan thuế mới được tính.`
+  }),
+
+  tntt: (e, c) => ({
+    title:'Thu nhập tính thuế', en:'Assessable income', res:c.tntt,
+    parts:[ P_(null,'Thu nhập chịu thuế','Taxable income',c.tnChiuThue),
+            P_('−','Tổng giảm trừ','Total deductions',c.tongGiamTru) ],
+    note: c.tntt === 0
+      ? 'Giảm trừ lớn hơn hoặc bằng thu nhập chịu thuế nên thu nhập tính thuế bằng 0 — kỳ này không phát sinh thuế.'
+      : 'Nếu giảm trừ lớn hơn thu nhập chịu thuế thì lấy bằng 0 (không có số âm).'
+  }),
+
+  thueTNCN: (e, c) => {
+    const i = TAX_BANDS.findIndex(b => c.tntt <= b.upto);
+    const b = TAX_BANDS[i < 0 ? TAX_BANDS.length - 1 : i];
+    return {
+      title:'Thuế thu nhập cá nhân', en:'Personal income tax', res:c.thueTNCN,
+      parts: c.tntt <= 0
+        ? [ P_(null,'Thu nhập tính thuế bằng 0','No assessable income',0) ]
+        : [ P_(null,'Thu nhập tính thuế','Assessable income',c.tntt),
+            P_('×',`Thuế suất bậc ${i + 1} — ${pct(b.rate, 0)}`,'Rate',null),
+            P_('−','Số trừ của bậc (cách tính rút gọn)','Quick deduction',b.sub) ],
+      note: c.tntt <= 0
+        ? 'Không phát sinh thuế trong kỳ này.'
+        : `Biểu thuế lũy tiến 5 bậc áp dụng từ kỳ tính thuế 2026. Thu nhập tính thuế ${n0(c.tntt)} đ rơi vào `
+          + `bậc ${i + 1} (thuế suất ${pct(b.rate, 0)}). Công thức rút gọn "thuế suất × TNTT − số trừ" cho kết quả `
+          + 'giống hệt cách tính từng bậc, chỉ ngắn hơn. Đây là thuế khấu trừ theo tháng — cuối năm vẫn phải quyết toán.'
+    };
+  },
+
+  thucLinh: (e, c) => ({
+    title:'THỰC LĨNH', en:'Net pay', res:c.thucLinh,
+    parts:[ P_(null,'Tổng thu nhập','Gross pay',c.tongThuNhap),
+            P_('−','Khấu trừ BHXH / BHYT / BHTN','Employee insurance',c.bhNLD),
+            P_('−','Thuế thu nhập cá nhân','Personal income tax',c.thueTNCN),
+            P_('−','Tạm ứng đã nhận','Advance',c.tamUng) ],
+    note:'Là số tiền thực tế chuyển vào tài khoản người lao động trong kỳ này.'
+  }),
+
+  bhxhDN: (e, c) => xpBH('BHXH doanh nghiệp đóng','Employer social insurance', K.BHXH_DN,
+    c.canCuXHYT, c.bhxhDN, K.TRAN_BHXH, 'trần BHXH', c,
+    '17,5% = 14% hưu trí – tử tuất + 3% ốm đau – thai sản + 0,5% tai nạn lao động – bệnh nghề nghiệp.'),
+  bhytDN: (e, c) => xpBH('BHYT doanh nghiệp đóng','Employer health insurance', K.BHYT_DN,
+    c.canCuXHYT, c.bhytDN, K.TRAN_BHXH, 'trần BHYT', c, ''),
+  bhtnDN: (e, c) => xpBH('BHTN doanh nghiệp đóng','Employer unemployment insurance', K.BHTN_DN,
+    c.canCuTN, c.bhtnDN, K.TRAN_BHTN, 'trần BHTN', c, ''),
+  kpcd: (e, c) => xpBH('Kinh phí công đoàn','Trade-union fund', K.KPCD,
+    c.canCuXHYT, c.kpcd, K.TRAN_BHXH, 'trần BHXH', c,
+    'Doanh nghiệp nộp 2% quỹ tiền lương làm căn cứ đóng BHXH, không trừ vào lương người lao động.'),
+
+  chiPhiDN: (e, c) => ({
+    title:'TỔNG CHI PHÍ DOANH NGHIỆP', en:'Total employer cost', res:c.chiPhiDN,
+    parts:[ P_(null,'Tổng thu nhập trả cho người lao động','Gross pay',c.tongThuNhap),
+            P_('+','BHXH doanh nghiệp 17,5%','Employer SI',c.bhxhDN),
+            P_('+','BHYT doanh nghiệp 3%','Employer HI',c.bhytDN),
+            P_('+','BHTN doanh nghiệp 1%','Employer UI',c.bhtnDN),
+            P_('+','Kinh phí công đoàn 2%','Union fund',c.kpcd) ],
+    note:`Người lao động nhận về ${n0(c.thucLinh)} đ, nhưng doanh nghiệp phải chi ${n0(c.chiPhiDN)} đ `
+       + `— chênh lệch ${n0(c.chiPhiDN - c.thucLinh)} đ là bảo hiểm hai bên đóng, kinh phí công đoàn, thuế TNCN và tạm ứng.`
+  })
+};
+
+/* --- Hiển thị popover --- */
+let popAnchor = null;
+
+function closePop(){
+  const p = $('#pop');
+  if(p) p.classList.remove('on');
+  $$('#sheet td.xopen').forEach(td => td.classList.remove('xopen'));
+  popAnchor = null;
+}
+
+/** Mở bảng diễn giải cho một chỉ tiêu, neo cạnh phần tử anchor. */
+function openPop(key, e, c, anchor, cellRef){
+  const build = EXPLAIN[key];
+  if(!build) return false;
+  const x = build(e, c, monthObj());
+  const col = COL_BY_KEY[key];
+  const money = v => x.plain ? nf.format(v) : n0(v);
+
+  /* Câu tóm tắt — đúng dạng người dùng đọc thành lời */
+  const sum = `<b>${esc(x.title)}</b> (<b>${money(x.res)}</b>) = `
+    + x.parts.map((p, i) =>
+        (i ? `<span class="op">${p.op}</span> ` : '')
+        + esc(p.lbl) + (p.v == null ? '' : ` (<b>${money(p.v)}</b>)`)
+      ).join(' ');
+
+  const body = x.parts.map(p =>
+    `<tr class="${p.op === '−' ? 'minus' : ''}"><td class="lbl">${esc(p.lbl)}<i>${esc(p.en)}</i></td>`
+    + `<td class="n">${p.v == null ? '<span style="color:var(--ink-3)">—</span>'
+        : (p.op === '−' ? '− ' : '') + money(p.v)}</td></tr>`).join('');
+
+  $('#pop').innerHTML =
+      `<div class="ph"><b>${esc(x.title)}</b><i>${esc(x.en)}</i>`
+    + (cellRef ? `<span class="cellref">${esc(cellRef)}</span>` : '')
+    + `</div><button class="pclose" aria-label="Đóng">✕</button>`
+    + `<div class="psum">${sum}</div>`
+    + `<table><tbody>${body}`
+    + `<tr class="res"><td>${esc(x.title)}</td><td class="n">${money(x.res)}</td></tr></tbody></table>`
+    + (col && col.f && cellRef
+        ? `<div class="pfx">Công thức Excel · ${esc(cellRef)}<br>${esc(col.f(parseInt(cellRef.replace(/^[A-Z]+/, ''), 10)))}</div>`
+        : '')
+    + `<div class="pnote">${esc(x.note)}</div>`;
+
+  const p = $('#pop');
+  p.classList.add('on');
+  const r  = anchor.getBoundingClientRect();
+  const pr = p.getBoundingClientRect();
+  let left = Math.min(Math.max(8, r.left), window.innerWidth  - pr.width  - 8);
+  let top  = r.bottom + 6;
+  if(top + pr.height > window.innerHeight - 8) top = Math.max(8, r.top - pr.height - 6);
+  p.style.left = left + 'px';
+  p.style.top  = top + 'px';
+  popAnchor = anchor;
+  p.querySelector('.pclose').addEventListener('click', closePop);
+  return true;
+}
+
+/* Phiếu lương: bấm vào dòng có dấu ƒ để mở bảng diễn giải */
+document.addEventListener('click', ev => {
+  const tr = ev.target.closest('.slip tr[data-x]');
+  if(!tr) return;
+  const e = S.emps.find(x => x.id === S.empSel);
+  if(!e) return;
+  if(popAnchor === tr){ closePop(); return; }
+  openPop(tr.dataset.x, e, calc(e, S.month), tr, '');
+});
+
+document.addEventListener('keydown', ev => { if(ev.key === 'Escape') closePop(); });
+window.addEventListener('resize', closePop);
+document.addEventListener('click', ev => {
+  if(ev.target.closest('#pop')) return;
+  if(!ev.target.closest('tr[data-x]') && !ev.target.closest('#sheet td[data-cell]')) closePop();
+}, true);
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PHẦN 10 · TAB BẢNG LƯƠNG
    ═══════════════════════════════════════════════════════════════════════════ */
 function renderSheet(){
@@ -1609,6 +2213,11 @@ function renderSheet(){
 
   /* --- tbody --- */
   for(const row of model.rows){
+    if(row.type === 'blank'){
+      html += `<tr><td class="txt" colspan="${cols.length}" style="text-align:center;color:var(--ink-3);padding:18px">`
+            + 'Kỳ lương này chưa có nhân sự nào.</td></tr>';
+      continue;
+    }
     if(row.type === 'group'){
       html += `<tr class="grp"><td class="txt stick" style="left:0" colspan="3">${esc(row.dept.vi)}</td>`
             + `<td class="txt" colspan="${Math.max(1, cols.length - 3)}">${esc(row.dept.en)} · ${row.count} nhân viên</td></tr>`;
@@ -1622,8 +2231,9 @@ function renderSheet(){
       const st  = FROZEN.includes(col.k);
       const sty = (st ? `left:${l}px;` : '') + (col.bold ? 'font-weight:600;' : '');
       if(st) l += col.w;
+      const xable = isEmp && !col.inp && !!EXPLAIN[col.k];   // ô có bảng diễn giải
       const cls = [st ? 'stick' : '', col.t || '', isEmp ? (col.inp ? 'inp' : 'calc') : '',
-                   col.neg ? 'neg' : '', col.emp ? 'emp-cost' : ''].filter(Boolean).join(' ');
+                   col.neg ? 'neg' : '', col.emp ? 'emp-cost' : '', xable ? 'hasx' : ''].filter(Boolean).join(' ');
       let inner = '';
 
       if(isEmp){
@@ -1706,7 +2316,18 @@ function applySelection(){
 /* --- Tương tác ô --- */
 document.addEventListener('click', ev => {
   const td = ev.target.closest('#sheet td[data-cell]');
-  if(td){ S.sel = td.dataset.cell; applySelection(); }
+  if(!td) return;
+  S.sel = td.dataset.cell;
+  applySelection();
+
+  /* Ô kết quả → mở bảng diễn giải. Bấm lại chính ô đó thì đóng. */
+  $$('#sheet td.xopen').forEach(x => x.classList.remove('xopen'));
+  if(!td.classList.contains('hasx')){ closePop(); return; }
+  if(popAnchor === td){ closePop(); return; }
+  const tr = td.closest('tr[data-emp]');
+  const e  = tr && S.emps.find(x => x.id === tr.dataset.emp);
+  if(!e){ closePop(); return; }
+  if(openPop(td.dataset.col, e, calc(e, S.month), td, td.dataset.cell)) td.classList.add('xopen');
 });
 document.addEventListener('focusin', ev => {
   const td = ev.target.closest('#sheet td[data-cell]');
@@ -1725,11 +2346,12 @@ document.addEventListener('change', ev => {
   if(inp.dataset.k === 'ngayCong') v = Math.min(v, 31);
   if(inp.dataset.k === 'npt')      v = Math.min(v, 20);
 
-  if(inp.dataset.m === '1') e.thang[S.month][inp.dataset.k] = v;
-  else                      e[inp.dataset.k] = v;
+  if(!e.thang[S.month]) return;                 // nhân viên không có mặt trong kỳ này
+  e.thang[S.month][inp.dataset.k] = v;
 
   const here = { emp:inp.dataset.emp, k:inp.dataset.k };
-  persist();
+  persistPeriod(S.month);                       // chỉ ghi lại kỳ đang sửa
+  syncPeriodPickers();
   renderAll();
 
   const target = pendingFocus || here;
@@ -1756,11 +2378,16 @@ document.addEventListener('keydown', ev => {
    PHẦN 11 · TAB PHIẾU LƯƠNG
    ═══════════════════════════════════════════════════════════════════════════ */
 function renderSlip(){
-  const e = S.emps.find(x => x.id === S.empSel) || S.emps[0];
+  const here = empsIn(S.month, 'ALL');
+  const e = here.find(x => x.id === S.empSel) || here[0];
+  if(!e){ $('#slip').innerHTML = '<div class="pad note">Kỳ lương này chưa có nhân sự nào.</div>'; return; }
   S.empSel = e.id;
   const c = calc(e, S.month), M = monthObj();
-  const row = (a, b, cls = '', fx = '') =>
-    `<tr class="${cls}"><td>${a}${fx ? `<span class="fx">${esc(fx)}</span>` : ''}</td><td>${b}</td></tr>`;
+  /* xkey = khoá trong EXPLAIN → dòng bấm được để mở bảng diễn giải */
+  const row = (a, b, cls = '', fx = '', xkey = '') =>
+    `<tr class="${cls}${xkey ? ' xrow' : ''}"${xkey ? ` data-x="${xkey}"` : ''}>`
+    + `<td>${a}${xkey ? '<span class="xmark" title="Bấm để xem diễn giải">ƒ</span>' : ''}`
+    + `${fx ? `<span class="fx">${esc(fx)}</span>` : ''}</td><td>${b}</td></tr>`;
 
   $('#slipBox').innerHTML = `<div class="slip">
     <div class="slip-hd">
@@ -1776,55 +2403,55 @@ function renderSlip(){
       <div><b>Chức vụ:</b> ${esc(e.chucVu)}</div>
       <div><b>Bộ phận:</b> ${esc(deptName(e.bp))}</div>
       <div><b>Ngày công:</b> ${c.nc}/${c.ncc} · OT ${c.otGio}h</div>
-      <div><b>Người phụ thuộc:</b> ${e.npt}</div>
+      <div><b>Người phụ thuộc:</b> ${c.npt}</div>
     </div>
     <table>
       ${row('<b>A. THU NHẬP</b> <span class="en">Earnings</span>', '<b>VNĐ</b>', 'sect')}
-      ${row('Lương chính (theo hợp đồng)', fm(e.luongChinh), 'ind')}
-      ${row('Phụ cấp trách nhiệm', fm(e.pcTrachNhiem), 'ind')}
-      ${row('Phụ cấp ăn trưa', fm(e.pcAnTrua), 'ind')}
-      ${row('Phụ cấp điện thoại', fm(e.pcDienThoai), 'ind')}
-      ${row('Phụ cấp xăng xe', fm(e.pcXangXe), 'ind')}
+      ${row('Lương chính (theo hợp đồng)', fm(c.luongChinh), 'ind')}
+      ${row('Phụ cấp trách nhiệm', fm(c.pcTrachNhiem), 'ind')}
+      ${row('Phụ cấp ăn trưa', fm(c.pcAnTrua), 'ind')}
+      ${row('Phụ cấp điện thoại', fm(c.pcDienThoai), 'ind')}
+      ${row('Phụ cấp xăng xe', fm(c.pcXangXe), 'ind')}
       ${row(`Lương &amp; phụ cấp theo ngày công (${c.nc}/${c.ncc})`, fm(c.luongTheoCong), '',
-            `=ROUND((Lương chính + Tổng phụ cấp)/${c.ncc}*${c.nc},0)`)}
+            `=ROUND((Lương chính + Tổng phụ cấp)/${c.ncc}*${c.nc},0)`, 'luongTheoCong')}
       ${row(`Tiền làm thêm giờ (${c.otGio}h × ${K.HS_OT * 100}%)`, fm(c.tienOT), '',
-            `=ROUND(G/(M*8)*P*HS_OT,0)  →  ROUND(${nf.format(e.luongChinh)}/(${c.ncc}*8)*${c.otGio}*${String(K.HS_OT).replace('.', ',')},0)`)}
+            `=ROUND(G/(M*8)*P*HS_OT,0)  →  ROUND(${nf.format(c.luongChinh)}/(${c.ncc}*8)*${c.otGio}*${String(K.HS_OT).replace('.', ',')},0)`, 'tienOT')}
       ${row('Thưởng / hỗ trợ khác', fm(c.thuong))}
-      ${row('<b>TỔNG THU NHẬP (GROSS)</b>', `<b>${fm(c.tongThuNhap)}</b>`, 'tt')}
+      ${row('<b>TỔNG THU NHẬP (GROSS)</b>', `<b>${fm(c.tongThuNhap)}</b>`, 'tt', '', 'tongThuNhap')}
 
       ${row('<b>B. CÁC KHOẢN NGƯỜI LAO ĐỘNG ĐÓNG</b> <span class="en">Employee deductions</span>', '', 'sect')}
       ${row(`Tiền lương đóng bảo hiểm${c.capped ? ' <i style="color:var(--debit)">(đã áp trần)</i>' : ''}`,
             fm(c.canCuXHYT), 'ind',
-            c.capped ? `=MIN(${nf.format(e.luongBH)}, TRAN_BHXH = ${nf.format(K.TRAN_BHXH)})` : '')}
-      ${row('BHXH 8%',   fm(-c.bhxhNLD), 'ind neg')}
-      ${row('BHYT 1,5%', fm(-c.bhytNLD), 'ind neg')}
-      ${row('BHTN 1%',   fm(-c.bhtnNLD), 'ind neg')}
-      ${row('<b>Cộng bảo hiểm (10,5%)</b>', `<b>${fm(-c.bhNLD)}</b>`, 'tt neg')}
+            c.capped ? `=MIN(${nf.format(c.luongBH)}, TRAN_BHXH = ${nf.format(K.TRAN_BHXH)})` : '')}
+      ${row('BHXH 8%',   fm(-c.bhxhNLD), 'ind neg', '', 'bhxhNLD')}
+      ${row('BHYT 1,5%', fm(-c.bhytNLD), 'ind neg', '', 'bhytNLD')}
+      ${row('BHTN 1%',   fm(-c.bhtnNLD), 'ind neg', '', 'bhtnNLD')}
+      ${row('<b>Cộng bảo hiểm (10,5%)</b>', `<b>${fm(-c.bhNLD)}</b>`, 'tt neg', '', 'bhNLD')}
 
       ${row('<b>C. THUẾ THU NHẬP CÁ NHÂN</b> <span class="en">Personal income tax</span>', '', 'sect')}
-      ${row('Thu nhập miễn thuế (ăn ca, khoán điện thoại, phần vượt OT)', fm(c.tongMien), 'ind')}
-      ${row('Thu nhập chịu thuế', fm(c.tnChiuThue), 'ind')}
+      ${row('Thu nhập miễn thuế (ăn ca, khoán điện thoại, phần vượt OT)', fm(c.tongMien), 'ind', '', 'tongMien')}
+      ${row('Thu nhập chịu thuế', fm(c.tnChiuThue), 'ind', '', 'tnChiuThue')}
       ${row('Giảm trừ bản thân', fm(K.GTGC_BAN_THAN), 'ind')}
-      ${row(`Giảm trừ ${e.npt} người phụ thuộc`, fm(K.GTGC_NPT * e.npt), 'ind')}
+      ${row(`Giảm trừ ${c.npt} người phụ thuộc`, fm(K.GTGC_NPT * c.npt), 'ind')}
       ${row('Bảo hiểm bắt buộc được trừ', fm(c.bhNLD), 'ind')}
       ${row('<b>Thu nhập tính thuế</b>', `<b>${fm(c.tntt)}</b>`, 'tt',
-            '=MAX(Thu nhập chịu thuế − Tổng giảm trừ, 0)')}
-      ${row('Thuế TNCN phải nộp', fm(-c.thueTNCN), 'neg', bandNote(c.tntt))}
+            '=MAX(Thu nhập chịu thuế − Tổng giảm trừ, 0)', 'tntt')}
+      ${row('Thuế TNCN phải nộp', fm(-c.thueTNCN), 'neg', bandNote(c.tntt), 'thueTNCN')}
 
       ${row('<b>D. KHOẢN KHÁC</b>', '', 'sect')}
       ${row('Tạm ứng đã nhận', fm(-c.tamUng), 'ind neg')}
-      ${row('<b>THỰC LĨNH</b> <span class="en">Net pay</span>', `<b>${fm(c.thucLinh)}</b>`, 'big')}
+      ${row('<b>THỰC LĨNH</b> <span class="en">Net pay</span>', `<b>${fm(c.thucLinh)}</b>`, 'big', '', 'thucLinh')}
     </table>
     <div class="words">Bằng chữ: ${docNum(c.thucLinh)}.</div>
 
     <table style="margin-top:18px">
       ${row('<b>E. CHI PHÍ DOANH NGHIỆP ĐÓNG THÊM</b> <span class="en">Employer contributions — not deducted from you</span>', '', 'sect')}
-      ${row('BHXH 17,5% (14% hưu trí–tử tuất + 3% ốm đau–thai sản + 0,5% TNLĐ–BNN)', fm(c.bhxhDN), 'ind')}
-      ${row('BHYT 3%', fm(c.bhytDN), 'ind')}
-      ${row('BHTN 1%', fm(c.bhtnDN), 'ind')}
-      ${row('Kinh phí công đoàn 2%', fm(c.kpcd), 'ind')}
+      ${row('BHXH 17,5% (14% hưu trí–tử tuất + 3% ốm đau–thai sản + 0,5% TNLĐ–BNN)', fm(c.bhxhDN), 'ind', '', 'bhxhDN')}
+      ${row('BHYT 3%', fm(c.bhytDN), 'ind', '', 'bhytDN')}
+      ${row('BHTN 1%', fm(c.bhtnDN), 'ind', '', 'bhtnDN')}
+      ${row('Kinh phí công đoàn 2%', fm(c.kpcd), 'ind', '', 'kpcd')}
       ${row('<b>Cộng doanh nghiệp đóng (23,5%)</b>', `<b>${fm(c.bhDN)}</b>`, 'tt')}
-      ${row('<b>TỔNG CHI PHÍ CHO NHÂN SỰ NÀY</b>', `<b>${fm(c.chiPhiDN)}</b>`, 'big')}
+      ${row('<b>TỔNG CHI PHÍ CHO NHÂN SỰ NÀY</b>', `<b>${fm(c.chiPhiDN)}</b>`, 'big', '', 'chiPhiDN')}
     </table>
     <div class="note" style="margin-top:8px">
       Tỷ lệ chi phí phụ trội: <b>${pct(c.chiPhiDN / c.tongThuNhap - 1)}</b> trên lương gross ·
@@ -1991,19 +2618,19 @@ const COMPO = [
 
 function deptStats(monthId){
   return DEPTS.map(d => {
-    const list = S.emps.filter(e => e.bp === d.id);
+    const list = empsIn(monthId, d.id);
     return { ...d, list, ...totals(list, monthId) };
   }).filter(d => d.list.length);
 }
 
 function renderDept(){
   const ds  = deptStats(S.month);
-  const all = totals(S.emps, S.month);
+  const all = totals(empsIn(S.month, 'ALL'), S.month);
   const M   = monthObj();
 
   $('#deptTiles').innerHTML = [
     tile('Số phòng ban', 'Departments', ds.length, null, '', 'phòng ban'),
-    tile('Nhân sự',      'Headcount',   S.emps.length, null, '', 'người'),
+    tile('Nhân sự',      'Headcount',   empsIn(S.month, 'ALL').length, null, '', 'người'),
     tile('Chi phí BQ/người', 'Avg cost per head', all.bqChiPhi, null, 'e'),
     tile('Thực lĩnh BQ/người','Avg net per head', all.bqThucLinh, null, '')
   ].join('');
@@ -2056,7 +2683,7 @@ function renderDept(){
       <td class="r">${fm(d.tongThuNhap)}</td><td class="r">${fm(d.bhNLD)}</td><td class="r">${fm(d.thueTNCN)}</td>
       <td class="r"><b>${fm(d.thucLinh)}</b></td><td class="r">${fm(d.bhDN)}</td>
       <td class="r"><b>${fm(d.chiPhiDN)}</b></td><td class="r">${fm(d.bqChiPhi)}</td></tr>`).join('')}
-    <tr class="grand"><td>TỔNG CỘNG</td><td class="r">${S.emps.length}</td>
+    <tr class="grand"><td>TỔNG CỘNG</td><td class="r">${empsIn(S.month, 'ALL').length}</td>
       <td class="r">${all.nc}</td><td class="r">${all.otGio}</td>
       <td class="r">${fm(all.tongThuNhap)}</td><td class="r">${fm(all.bhNLD)}</td>
       <td class="r">${fm(all.thueTNCN)}</td><td class="r">${fm(all.thucLinh)}</td>
@@ -2069,8 +2696,11 @@ function renderDept(){
    Toàn công ty và phòng ban. Không có bất kỳ so sánh nào giữa các cá nhân.
    ═══════════════════════════════════════════════════════════════════════════ */
 function renderReport(){
-  const byMonth = MONTHS.map(m => ({ m, t: totals(S.emps, m.id) }));
-  const idx = monthIdx(S.month);
+  const VP = viewPeriods();          // 12 kỳ gần nhất tính đến kỳ đang xem
+  /* Nhiều kỳ thì nhãn phải ngắn, nếu không chữ trên trục hoành sẽ chồng nhau */
+  const lb = m => VP.length > 5 ? `T${m.m}/${String(m.y).slice(2)}` : m.vi;
+  const byMonth = VP.map(m => ({ m, t: totals(empsIn(m.id, 'ALL'), m.id) }));
+  const idx = VP.findIndex(m => m.id === S.month);
   const cur = byMonth[idx].t;
   const prv = idx > 0 ? byMonth[idx - 1].t : null;
   const M   = monthObj();
@@ -2083,8 +2713,10 @@ function renderReport(){
     tile('Tổng chi phí DN',    'Employer cost',  cur.chiPhiDN,   prv && prv.chiPhiDN, 'e'),
     tile('Thuế TNCN',          'PIT withheld',   cur.thueTNCN,   prv && prv.thueTNCN, 'd'),
     tile('Tổng giờ OT',        'Overtime hours', cur.otGio,      prv && prv.otGio, '', 'giờ'),
-    tile('Chi phí / 1đ thực lĩnh', 'Cost per 1đ net', cur.chiPhiDN / cur.thucLinh, null, 'e',
-         'đồng chi ra cho mỗi đồng về tay', v => v.toFixed(2).replace('.', ',') + ' đ')
+    tile('Chi phí / 1đ thực lĩnh', 'Cost per 1đ net',
+         cur.thucLinh ? cur.chiPhiDN / cur.thucLinh : 0, null, 'e',
+         'đồng chi ra cho mỗi đồng về tay',
+         v => v ? v.toFixed(2).replace('.', ',') + ' đ' : '–')
   ].join('');
 
   /* --- Diễn biến toàn công ty --- */
@@ -2094,24 +2726,24 @@ function renderReport(){
     { vi:'Tổng thực lĩnh',  en:'Net pay',       c:'var(--s3)', f:t => t.thucLinh }
   ];
   $('#c-trend').innerHTML = cols(
-    byMonth.map(x => ({ label:x.m.vi, sub:x.m.en, vals:trend.map(s => s.f(x.t)) })),
+    byMonth.map(x => ({ label:lb(x.m), sub:x.m.en, vals:trend.map(s => s.f(x.t)) })),
     trend.map(s => s.c), trend.map(s => s.vi),
     { activeIdx:idx, label:'Diễn biến quỹ lương toàn công ty theo tháng' });
   $('#l-trend').innerHTML = legendHtml(trend);
 
   /* --- Cơ cấu chi phí toàn công ty (cột chồng) --- */
   $('#c-compo').innerHTML = cols(
-    byMonth.map(x => ({ label:x.m.vi, sub:x.m.en, vals:COMPO.map(k => k.f(x.t)) })),
+    byMonth.map(x => ({ label:lb(x.m), sub:x.m.en, vals:COMPO.map(k => k.f(x.t)) })),
     COMPO.map(k => k.c), COMPO.map(k => k.vi),
     { mode:'stacked', activeIdx:idx, W:520, H:250, label:'Cơ cấu chi phí lao động toàn công ty' });
   $('#l-compo').innerHTML = legendHtml(COMPO);
 
   /* --- Chi phí theo phòng ban qua các tháng --- */
-  const dsByMonth = MONTHS.map(m => deptStats(m.id));
+  const dsByMonth = VP.map(m => deptStats(m.id));
   const deptList  = dsByMonth[0].map(d => d.id);
   $('#c-deptmonth').innerHTML = cols(
-    MONTHS.map((m, i) => ({
-      label:m.vi.replace('Tháng ', 'T'), sub:m.en,
+    VP.map((m, i) => ({
+      label:lb(m).replace('Tháng ', 'T'), sub:m.en,
       vals: deptList.map(id => (dsByMonth[i].find(d => d.id === id) || { chiPhiDN:0 }).chiPhiDN)
     })),
     deptList.map(id => deptColor(id)), deptList.map(id => deptName(id)),
@@ -2171,12 +2803,13 @@ function renderReport(){
     ['Chi phí bình quân / người',  t => t.bqChiPhi,     fm]
   ];
   $('#repCoTable').innerHTML = `<thead><tr><th>Chỉ tiêu</th>
-      ${MONTHS.map(m => `<th class="r">${m.vi}</th>`).join('')}
+      ${VP.map(m => `<th class="r">${m.vi}</th>`).join('')}
       <th class="r">Chênh lệch kỳ cuối</th><th class="r">%</th></tr></thead><tbody>
     ${metrics.map(([label, f, fmt]) => {
       const vals = byMonth.map(x => f(x.t));
-      const d = vals[vals.length - 1] - vals[vals.length - 2];
-      const r = vals[vals.length - 2] ? d / vals[vals.length - 2] : 0;
+      const base = vals.length >= 2 ? vals[vals.length - 2] : 0;
+      const d = vals.length >= 2 ? vals[vals.length - 1] - base : 0;
+      const r = base ? d / base : 0;
       const color = `color:${d >= 0 ? 'var(--accent)' : 'var(--debit)'}`;
       const strong = label.startsWith('TỔNG');
       return `<tr${strong ? ' class="grand"' : ''}><td>${strong ? `<b>${label}</b>` : label}</td>
@@ -2195,7 +2828,7 @@ function renderReport(){
     if(dNcc) bits.push(`ngày công chuẩn đổi từ ${pM.ncc} xuống ${M.ncc} ngày`);
     if(dTh)  bits.push(`quỹ thưởng ${dTh >= 0 ? 'tăng' : 'giảm'} ${fm(Math.abs(dTh))} đ`);
     if(dOT)  bits.push(`tổng giờ làm thêm ${dOT >= 0 ? 'tăng' : 'giảm'} ${Math.abs(dOT)} giờ`);
-    const nghi = S.emps.reduce((a, e) => a + (calc(e, M.id).ncc - calc(e, M.id).nc), 0);
+    const nghi = empsIn(M.id, 'ALL').reduce((a, e) => { const q = calc(e, M.id); return a + (q.ncc - q.nc); }, 0);
     if(nghi) bits.push(`toàn công ty nghỉ ${nghi} công so với ngày công chuẩn`);
     $('#repNarr').innerHTML =
       `<b>${M.vi} so với ${pM.vi}:</b> tổng chi phí lao động ${dCost >= 0 ? 'tăng' : 'giảm'} `
@@ -2231,6 +2864,7 @@ function renderDocs(){
     if(unit === '%') return (v * 100).toFixed(2).replace('.', ',') + '%';
     if(unit === 'đ') return nf.format(v) + ' đ';
     if(unit === '×') return String(v).replace('.', ',') + '×';
+    if(unit === 'ngày') return v + ' ngày';
     return v === 1 ? '1 — có' : v === 0 ? '0 — không' : String(v);
   };
   $('#constBox').innerHTML =
@@ -2350,7 +2984,7 @@ const FORMULA_NOTE = {
   luongTheoCong:'Lương và phụ cấp chia ngày công chuẩn, nhân ngày công thực tế.',
   tienOT      : 'Đơn giá giờ × số giờ làm thêm × 150% (ngày thường).',
   tongThuNhap : 'Gross thực tế của kỳ lương.',
-  bhxhNLD     : 'Kẹp căn cứ đóng giữa sàn và trần trước khi nhân tỷ lệ.',
+  bhxhNLD     : 'Kẹp căn cứ đóng giữa sàn và trần trước khi nhân tỷ lệ. Phần IF(...) ở ngoài: nghỉ không hưởng lương từ 14 ngày công trở lên thì tháng đó không đóng bảo hiểm (Điều 42 QĐ 595/QĐ-BHXH).',
   bhytNLD     : 'Cùng căn cứ đóng với BHXH.',
   bhtnNLD     : 'Trần BHTN cao hơn: 20 × lương tối thiểu vùng.',
   bhNLD       : 'Tổng phần người lao động đóng (10,5%).',
@@ -2392,15 +3026,84 @@ function printWith(orientation){
   setTimeout(() => { st.remove(); if(z !== null) wrap.style.zoom = ''; }, 1200);
 }
 
+/* ───────────────────────────────────────────────────────────────────────────
+   BỘ CHỌN KỲ KẾ TOÁN  (Năm / Tháng)
+   ---------------------------------------------------------------------------
+   Dropdown Năm liệt kê các năm đã có kỳ, cộng thêm năm liền sau để kế toán mở
+   sổ sang năm mới. Dropdown Tháng luôn đủ 12 tháng: tháng đã có dữ liệu hiện
+   bình thường, tháng chưa có được đánh dấu "· chưa có dữ liệu".
+   ─────────────────────────────────────────────────────────────────────────── */
+function yearRange(){
+  const ys = new Set(MONTHS.map(m => m.y));
+  const max = Math.max(...ys), min = Math.min(...ys);
+  for(let y = min; y <= max + 1; y++) ys.add(y);       // luôn cho phép mở sang năm sau
+  if(S.browseYear) ys.add(S.browseYear);
+  return Array.from(ys).sort((a, b) => a - b);
+}
+
+/**
+ * Đồng bộ hai dropdown với kỳ đang xem.
+ * S.browseYear cho phép xem danh sách tháng của một năm chưa có dữ liệu mà
+ * KHÔNG mở kỳ nào — kỳ mới chỉ được tạo khi kế toán chọn hẳn một tháng.
+ */
+function syncPeriodPickers(){
+  const cur = MONTHS.find(m => m.id === S.month) || MONTHS[MONTHS.length - 1];
+  S.month = cur.id;
+  const y = S.browseYear || cur.y;
+
+  $('#ySel').innerHTML = yearRange().map(v => `<option value="${v}">Năm ${v}</option>`).join('');
+  $('#ySel').value = String(y);
+
+  const opts = Array.from({ length:12 }, (_, i) => {
+    const m = i + 1, has = hasPeriod(periodIdOf(y, m));
+    return `<option value="${m}">${MONTH_VI[m]}${has ? '' : '  ·  chưa có dữ liệu'}</option>`;
+  });
+  const sameYear = cur.y === y;
+  $('#mSel').innerHTML = (sameYear ? '' : '<option value="">— chọn tháng để mở kỳ —</option>') + opts.join('');
+  $('#mSel').value = sameYear ? String(cur.m) : '';
+
+  const n = empsIn(cur.id, 'ALL').length;
+  const trong = empsIn(cur.id, 'ALL').every(e => F_BIEN_DONG.every(k => !snap(e, cur.id)[k]));
+  const st = $('#kyStat');
+  st.textContent = trong ? `kỳ mới · ${n} nhân sự · chưa nhập liệu` : `${n} nhân sự · ${MONTHS.length} kỳ trong sổ`;
+  st.className = 'kystat' + (trong ? ' new' : '');
+  $('#btnDelKy').disabled   = MONTHS.length <= 1;
+  $('#btnFillNcc').disabled = !n;
+}
+
+/** Chuyển sang một kỳ — tự mở kỳ mới nếu (y, m) chưa có dữ liệu. */
+function gotoPeriod(y, m){
+  S.browseYear = null;
+  const pid = periodIdOf(y, m);
+  if(!hasPeriod(pid)){
+    const res = createPeriod(y, m);
+    S.month = res.period.id;
+    syncPeriodPickers();
+    renderAll();
+    toast(res.nguon
+      ? `Đã mở kỳ ${res.period.vi}: sao chép ${res.soNguoi} nhân sự từ ${res.nguon.vi}, `
+        + `giữ nguyên lương và phụ cấp, đặt ngày công / OT / thưởng / tạm ứng về 0. `
+        + `Ngày công chuẩn mặc định ${res.period.ncc} ngày.`
+      : `Đã mở kỳ ${res.period.vi} — chưa có kỳ nào trước đó để sao chép danh sách nhân sự.`);
+    return;
+  }
+  S.month = pid;
+  persistIndex();
+  syncPeriodPickers();
+  renderAll();
+}
+
 function renderAll(){
   const sel = $('#eSel');
+  const here = empsIn(S.month, 'ALL');
   sel.innerHTML = DEPTS.map(d => {
-    const list = S.emps.filter(e => e.bp === d.id);
+    const list = empsIn(S.month, d.id);
     if(!list.length) return '';
     return `<optgroup label="${esc(d.vi)}">`
          + list.map(e => `<option value="${e.id}">${esc(e.id)} — ${esc(e.ten)}</option>`).join('')
          + '</optgroup>';
   }).join('');
+  if(!here.some(e => e.id === S.empSel) && here.length) S.empSel = here[0].id;
   sel.value = S.empSel;
 
   renderSheet();
@@ -2411,16 +3114,56 @@ function renderAll(){
 }
 
 function init(){
-  /* Bộ chọn kỳ lương & phòng ban */
-  $('#mSel').innerHTML = MONTHS.map(m => `<option value="${m.id}">${m.vi} · ${m.en}</option>`).join('');
-  $('#mSel').value = S.month;
+  /* Bộ chọn kỳ kế toán & phòng ban */
   $('#dSel').innerHTML = '<option value="ALL">Toàn công ty · All</option>'
     + DEPTS.map(d => `<option value="${d.id}">${d.vi}</option>`).join('');
   $('#dSel').value = S.dept;
+  syncPeriodPickers();
 
-  $('#mSel').addEventListener('change', e => { S.month = e.target.value; renderAll(); });
-  $('#dSel').addEventListener('change', e => { S.dept  = e.target.value; renderSheet(); });
-  $('#eSel').addEventListener('change', e => { S.empSel = e.target.value; renderSlip(); });
+  /* Đổi năm: giữ nguyên tháng nếu năm đó đã có kỳ, ngược lại về tháng 1 */
+  /* Đổi NĂM: nếu năm đó đã có kỳ thì nhảy tới kỳ gần nhất của năm;
+     nếu chưa có kỳ nào thì chỉ nạp lại danh sách tháng — không tự tạo gì cả. */
+  $('#ySel').addEventListener('change', () => {
+    const y = Number($('#ySel').value);
+    const inYear = MONTHS.filter(m => m.y === y);
+    if(inYear.length){ S.browseYear = null; gotoPeriod(y, inYear[inYear.length - 1].m); }
+    else { S.browseYear = y; syncPeriodPickers(); toast(`Năm ${y} chưa có kỳ lương nào — chọn một tháng để mở kỳ mới.`); }
+  });
+
+  /* Đổi THÁNG: đây mới là hành động mở kỳ. */
+  $('#mSel').addEventListener('change', () => {
+    const m = Number($('#mSel').value);
+    if(!m) return;                                   // đang ở dòng "— chọn tháng —"
+    gotoPeriod(Number($('#ySel').value), m);
+  });
+  $('#dSel').addEventListener('change', e => { S.dept = e.target.value; persistIndex(); renderSheet(); });
+  $('#eSel').addEventListener('change', e => { S.empSel = e.target.value; persistIndex(); renderSlip(); });
+
+  /* Đổ ngày công chuẩn cho cả kỳ — kỳ mới bắt đầu từ 0 nên đây là cú bấm
+     đầu tiên của kế toán, sau đó chỉ sửa những người nghỉ. */
+  $('#btnFillNcc').addEventListener('click', () => {
+    const P = monthObj();
+    const list = empsIn(P.id, 'ALL');
+    if(!list.length) return;
+    if(!confirm(`Đặt ngày công thực tế = ${P.ncc} ngày cho toàn bộ ${list.length} nhân sự của ${P.vi}?\n`
+              + `Các giá trị ngày công đang có sẽ bị ghi đè.`)) return;
+    list.forEach(e => { e.thang[P.id].ngayCong = P.ncc; });
+    persistPeriod(P.id);
+    syncPeriodPickers();
+    renderAll();
+    toast(`Đã điền ${P.ncc} ngày công cho ${list.length} nhân sự của ${P.vi}.`);
+  });
+
+  /* Xoá kỳ — chỉ xoá đúng khoá localStorage của kỳ đó */
+  $('#btnDelKy').addEventListener('click', () => {
+    const P = monthObj();
+    if(MONTHS.length <= 1){ toast('Sổ chỉ còn một kỳ lương — không xoá được.'); return; }
+    if(!confirm(`Xoá toàn bộ dữ liệu kỳ ${P.vi}?\nCác kỳ lương khác không bị ảnh hưởng.`)) return;
+    deletePeriod(P.id);
+    syncPeriodPickers();
+    renderAll();
+    toast(`Đã xoá kỳ ${P.vi}. Đang xem ${monthObj().vi}.`);
+  });
 
   $$('.tab').forEach(t => t.addEventListener('click', () => show(t.dataset.p)));
   $$('.chip').forEach(c => c.addEventListener('click', () => {
@@ -2446,10 +3189,15 @@ function init(){
   /* Đặt lại & giao diện sáng/tối */
   $('#btnReset').addEventListener('click', () => {
     if(!confirm('Khôi phục toàn bộ dữ liệu mẫu ban đầu? Mọi thay đổi bạn đã nhập sẽ mất.')) return;
+    MONTHS.forEach(m => lsDel(K_PERIOD(m.id)));
+    MONTHS = SEED_MONTHS.map(a => makePeriod(a[0], a[1], a[2]));
     S.emps = seedEmployees();
-    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    S.month = MONTHS[MONTHS.length - 1].id;
+    S.empSel = 'NV003';
+    persist();
+    syncPeriodPickers();
     renderAll();
-    toast('Đã khôi phục dữ liệu mẫu ban đầu.');
+    toast('Đã khôi phục dữ liệu mẫu ban đầu — 3 kỳ lương T6, T7, T8/2026.');
   });
   $('#btnTheme').addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme');
