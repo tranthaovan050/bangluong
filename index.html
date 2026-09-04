@@ -246,6 +246,117 @@ code.f{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--acce
 .bar-mini i{display:block; height:100%}
 .locked{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; text-transform:uppercase;
   letter-spacing:.05em; color:var(--accent); background:var(--accent-soft); border-radius:99px; padding:2px 8px}
+/* ── MODAL THÊM / SỬA NHÂN SỰ ───────────────────────────────────────────────
+   Cách ẩn/hiện: mặc định .modal có display:none; thêm class "on" là hiện.
+   Dùng display chứ không dùng visibility để form không bị tab vào khi đang ẩn. */
+.modal{position:fixed; inset:0; z-index:200; display:none;
+  background:rgba(12,15,13,.55); backdrop-filter:blur(2px);
+  align-items:flex-start; justify-content:center; padding:32px 16px; overflow:auto}
+.modal.on{display:flex}
+.modal-box{background:var(--surface); border:1px solid var(--rule-3); border-radius:12px;
+  box-shadow:0 24px 60px rgba(0,0,0,.32); width:min(680px,100%); animation:mpop .14s ease-out}
+@keyframes mpop{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:none}}
+.modal-box > form{display:block}
+.modal-box header{position:relative; display:flex; align-items:baseline; gap:9px;
+  padding:15px 46px 15px 18px; border-bottom:1px solid var(--rule); background:var(--surface-2);
+  border-radius:12px 12px 0 0}
+.modal-box header h3{margin:0; font-size:15px; font-weight:700}
+.modal-box header .en{font-size:11.5px; color:var(--ink-3); font-style:italic}
+.modal-box header .x{position:absolute; top:11px; right:12px; width:26px; height:26px; border:0;
+  border-radius:6px; background:transparent; color:var(--ink-3); font-size:15px; cursor:pointer}
+.modal-box header .x:hover{background:var(--surface-3); color:var(--ink)}
+.modal-box .mbody{padding:16px 18px; max-height:min(64vh,560px); overflow:auto}
+.modal-box .mnote{margin:0 0 14px; font-size:11.5px; line-height:1.6; color:var(--ink-3);
+  border-left:2px solid var(--rule-3); padding-left:10px}
+.modal-box h4{margin:18px 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--ink-2); font-weight:700}
+.modal-box h4 .en{text-transform:none; letter-spacing:0; font-weight:400; color:var(--ink-3)}
+.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:11px}
+.fgrid .full{grid-column:1 / -1}
+.fld{display:flex; flex-direction:column; gap:4px}
+.fld label{font-size:11.5px; font-weight:600; color:var(--ink-2)}
+.fld label b{color:var(--debit); font-weight:600}          /* dấu * bắt buộc */
+.fld input, .fld select{background:var(--surface-2); border:1px solid var(--rule-2); border-radius:6px;
+  padding:7px 9px; font:inherit; font-size:13px; color:var(--ink); width:100%}
+.fld input:focus, .fld select:focus{outline:2px solid var(--accent); outline-offset:-1px;
+  border-color:var(--accent); background:var(--surface)}
+.fld input.num{text-align:right; font-variant-numeric:tabular-nums}
+.fld input.bad{border-color:var(--debit); background:color-mix(in srgb,var(--debit) 8%,transparent)}
+.fld .hint{font-size:10.5px; color:var(--ink-3); line-height:1.45}
+.merr{margin:14px 0 0; padding:9px 11px; border-radius:7px; font-size:12px; line-height:1.55;
+  color:var(--debit); background:color-mix(in srgb,var(--debit) 10%,transparent);
+  border:1px solid color-mix(in srgb,var(--debit) 35%,transparent)}
+.modal-box footer{display:flex; align-items:center; gap:8px; padding:13px 18px;
+  border-top:1px solid var(--rule); background:var(--surface-2); border-radius:0 0 12px 12px}
+.modal-box footer .spacer{flex:1}
+@media (max-width:560px){ .fgrid{grid-template-columns:1fr} }
+
+/* Cột thao tác — nằm NGOÀI mô hình COLS nên không lọt vào file Excel.
+   Ghim vào mép phải để bấm được ở mọi vị trí cuộn ngang (bảng rộng 37 cột). */
+td.act, th.act{width:44px; min-width:44px; text-align:center; padding:2px 4px !important;
+  position:sticky; right:0; z-index:16; border-left:1px solid var(--rule-2)}
+table.sheet thead th.act{z-index:32}
+.btn-edit{border:1px solid var(--rule-2); background:var(--surface-2); color:var(--ink-2);
+  border-radius:5px; width:26px; height:22px; cursor:pointer; font-size:11px; line-height:1}
+.btn-edit:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-soft)}
+@media print{ td.act, th.act{display:none !important} }
+
+/* ── Ô TÌM KIẾM ─────────────────────────────────────────────────────────────
+   Kế thừa .pick cho đồng bộ, chỉ chỉnh thêm bề rộng và nút xoá của input search */
+select.pick, input.pick{background:var(--surface-2); border:1px solid var(--rule-2); border-radius:5px;
+  padding:4px 8px; font-size:13px; font-weight:500; font-family:inherit; color:var(--ink)}
+input.search{width:186px; font-weight:400}
+input.search::placeholder{color:var(--ink-3); font-weight:400}
+input.search:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent);
+  background:var(--surface)}
+input.search::-webkit-search-cancel-button{cursor:pointer}
+.findstat{font-size:11.5px; font-weight:600; padding:3px 8px; border-radius:99px; white-space:nowrap;
+  background:var(--accent-soft); color:var(--accent-2); border:1px solid color-mix(in srgb,var(--accent) 32%,transparent)}
+.findstat.none{background:color-mix(in srgb,var(--debit) 11%,transparent); color:var(--debit);
+  border-color:color-mix(in srgb,var(--debit) 35%,transparent)}
+:root[data-theme="dark"] .findstat{color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .findstat{color:var(--accent)}}
+/* Dòng đang khớp từ khoá — làm nổi nhẹ để mắt bám được */
+#sheet tr.emp.hit > td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+
+/* ── TOAST HOÀN TÁC ─────────────────────────────────────────────────────────
+   Tách hẳn khỏi #toast cũ. Góc dưới bên TRÁI để không đè lên #toast (giữa dưới).
+   Ẩn/hiện bằng class .on, trượt lên bằng transform + opacity.               */
+#undoToast{position:fixed; left:20px; bottom:22px; z-index:150;
+  display:flex; align-items:center; gap:11px;
+  background:var(--ink); color:var(--surface);
+  border-radius:9px; padding:11px 13px; font-size:13px; max-width:min(460px,calc(100vw - 40px));
+  box-shadow:0 12px 34px rgba(0,0,0,.34);
+  opacity:0; transform:translateY(14px); pointer-events:none;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1)}
+#undoToast.on{opacity:1; transform:none; pointer-events:auto}
+#undoToast .ut-ico{font-size:14px; opacity:.85; flex:none}
+#undoToast .ut-msg{flex:1; line-height:1.45}
+#undoToast .ut-msg b{color:var(--surface)}
+#undoToast .ut-btn{flex:none; background:transparent; border:1px solid rgba(255,255,255,.34);
+  color:var(--accent-soft); font:inherit; font-size:11.5px; font-weight:700; letter-spacing:.06em;
+  padding:5px 11px; border-radius:6px; cursor:pointer; transition:background .12s, border-color .12s}
+#undoToast .ut-btn:hover{background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.6)}
+#undoToast .ut-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+/* Thanh đếm ngược 30 giây */
+#undoToast .ut-bar{position:absolute; left:0; bottom:0; height:2px; width:100%;
+  border-radius:0 0 9px 9px; overflow:hidden}
+#undoToast .ut-bar i{display:block; height:100%; width:100%; background:var(--accent); transform-origin:left}
+#undoToast.on .ut-bar i{animation:utcount var(--ut-dur,30s) linear forwards}
+@keyframes utcount{from{transform:scaleX(1)} to{transform:scaleX(0)}}
+@media (prefers-reduced-motion: reduce){
+  #undoToast{transition:none}
+  #undoToast.on .ut-bar i{animation:none}
+}
+:root[data-theme="dark"] #undoToast{background:var(--surface-3); color:var(--ink);
+  border:1px solid var(--rule-3)}
+@media (prefers-colors-scheme: dark){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) #undoToast{background:var(--surface-3); color:var(--ink);
+    border:1px solid var(--rule-3)}
+}
+@media (max-width:560px){ #undoToast{left:12px; right:12px; max-width:none} }
+
 #toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--surface); border:1px solid var(--rule-2);
   box-shadow:var(--shadow); border-radius:8px; padding:10px 14px; font-size:13px; z-index:99; max-width:90vw; display:none}
 
@@ -343,6 +454,11 @@ td.xopen{box-shadow:inset 0 0 0 2px var(--accent) !important}
     <div class="ctl"><label for="mSel">Tháng</label><select class="pick" id="mSel"></select></div>
     <div class="ctl"><label for="dSel">Bộ phận</label><select class="pick" id="dSel"></select></div>
     <span class="kystat" id="kyStat"></span>
+    <div class="ctl"><label for="searchInput">Tìm</label>
+      <input type="search" id="searchInput" class="pick search" placeholder="Tìm mã NV, họ tên…"
+             autocomplete="off" aria-label="Tìm nhân sự trong bảng lương"></div>
+    <span class="findstat" id="findStat" hidden></span>
+    <button class="btn" id="btnAddEmp" title="Thêm nhân sự mới vào kỳ lương đang xem">＋ Thêm nhân sự</button>
     <button class="btn" id="btnFillNcc" title="Đổ ngày công chuẩn của kỳ cho tất cả nhân sự">⤵ Điền ngày công chuẩn</button>
     <button class="btn danger" id="btnDelKy" title="Xoá kỳ lương đang xem">🗑 Xoá kỳ</button>
     <div class="spacer"></div>
@@ -489,6 +605,46 @@ td.xopen{box-shadow:inset 0 0 0 2px var(--accent) !important}
 
 <div class="tip" id="tip" role="status" aria-live="off"></div>
 <div id="pop" class="noprint" role="dialog" aria-label="Diễn giải công thức"></div>
+<!-- ═══ MODAL THÊM / SỬA NHÂN SỰ ═══
+     .modal là lớp phủ toàn màn hình; thêm class "on" để hiện, bỏ ra để ẩn. -->
+<div class="modal noprint" id="empModal" role="dialog" aria-modal="true" aria-labelledby="empModalTitle">
+  <div class="modal-box">
+    <header>
+      <h3 id="empModalTitle">Thêm nhân sự</h3>
+      <span class="en" id="empModalSub"></span>
+      <button type="button" class="x" id="empClose" aria-label="Đóng">✕</button>
+    </header>
+
+    <form id="empForm" novalidate>
+      <div class="mbody">
+        <p class="mnote" id="empScope"></p>
+
+        <div class="fgrid" id="empIdentity"></div>
+
+        <h4>Thông số của kỳ lương này <span class="en" id="empPeriodName"></span></h4>
+        <div class="fgrid" id="empMoney"></div>
+
+        <p class="merr" id="empErr" hidden></p>
+      </div>
+
+      <footer>
+        <button type="button" class="btn danger" id="empDelete">🗑 Xoá khỏi kỳ này</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="empCancel">Huỷ</button>
+        <button type="submit" class="btn primary">Lưu</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ TOAST HOÀN TÁC (riêng biệt, không dùng chung với #toast cũ) ═══ -->
+<div id="undoToast" class="noprint" role="alert" aria-live="assertive">
+  <span class="ut-ico">🗑</span>
+  <span class="ut-msg" id="undoMsg"></span>
+  <button type="button" class="ut-btn" id="undoBtn">HOÀN TÁC</button>
+  <span class="ut-bar"><i id="undoBar"></i></span>
+</div>
+
 <div id="toast" role="status"></div>
 
 <script>
@@ -683,9 +839,13 @@ const SEED = [
 const F_HOP_DONG  = ['luongChinh','pcTrachNhiem','pcAnTrua','pcDienThoai','pcXangXe','npt','luongBH'];
 const F_BIEN_DONG = ['ngayCong','otGio','thuong','tamUng'];
 
+/** Khoá nội bộ, sinh tự động. KHÁC với mã NV: mã NV là mã nghiệp vụ do kế toán
+    đặt và có thể sửa; uid không bao giờ đổi, dùng để tìm đúng nhân viên khi lưu. */
+const newUid = () => 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
 function seedEmployees(){
   return SEED.map((r, i) => ({
-    stt:i+1, id:r[0], ten:r[1], chucVu:r[2], bp:r[3],
+    uid:'u_' + r[0], stt:i+1, id:r[0], ten:r[1], chucVu:r[2], bp:r[3],
     thang: Object.fromEntries(MONTHS.map((m, k) => [m.id, {
       luongChinh:r[4], pcTrachNhiem:r[5], pcAnTrua:r[6], pcDienThoai:r[7], pcXangXe:r[8],
       npt:r[9], luongBH:r[10],
@@ -730,7 +890,7 @@ const lsDel = k => { try{ localStorage.removeItem(k); }catch(e){} };
 /** Danh sách nhân sự của một kỳ, ở dạng phẳng để ghi xuống localStorage. */
 function periodRows(pid){
   return S.emps.filter(e => e.thang[pid]).map(e => ({
-    id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp, ...e.thang[pid]
+    uid:e.uid, id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp, ...e.thang[pid]
   }));
 }
 
@@ -787,7 +947,7 @@ function persist(){
     try{ old = JSON.parse(lsGet(STORE_KEY_V2) || 'null'); }catch(e){ old = null; }
     if(old && Array.isArray(old.emps) && old.emps.length){
       const conv = old.emps.filter(e => e && e.id && e.thang).map((e, i) => ({
-        stt:i + 1, id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp,
+        uid:'u_' + e.id, stt:i + 1, id:e.id, ten:e.ten, chucVu:e.chucVu, bp:e.bp,
         thang: Object.fromEntries(Object.keys(e.thang).map(k => {
           const t = {};
           F_HOP_DONG.forEach(f  => { t[f] = Number(e[f]) || 0; });
@@ -816,7 +976,7 @@ function persist(){
     .sort(cmpPeriod);
   if(!months.length) return;
 
-  const byId = new Map();                    // mã NV → đối tượng nhân viên hợp nhất
+  const byId = new Map();                    // uid → đối tượng nhân viên hợp nhất
   const kept = [];
   for(const P of months){
     let rec = null;
@@ -825,9 +985,10 @@ function persist(){
     kept.push(P);
     for(const r of rec.rows){
       if(!r || !r.id) continue;
-      let e = byId.get(r.id);
-      if(!e){ e = { stt:byId.size + 1, id:r.id, ten:r.ten, chucVu:r.chucVu, bp:r.bp, thang:{} }; byId.set(r.id, e); }
-      e.ten = r.ten; e.chucVu = r.chucVu; e.bp = r.bp;     // giá trị của kỳ gần nhất
+      const uid = r.uid || ('u_' + r.id);     // bản ghi cũ chưa có uid → suy từ mã NV
+      let e = byId.get(uid);
+      if(!e){ e = { uid, stt:byId.size + 1, id:r.id, ten:r.ten, chucVu:r.chucVu, bp:r.bp, thang:{} }; byId.set(uid, e); }
+      e.id = r.id; e.ten = r.ten; e.chucVu = r.chucVu; e.bp = r.bp;   // giá trị của kỳ gần nhất
       const t = {};
       F_HOP_DONG.concat(F_BIEN_DONG).forEach(k => { t[k] = Number(r[k]) || 0; });
       e.thang[P.id] = t;
@@ -1043,7 +1204,10 @@ const HEAD_BAND = 5;     // dòng tiêu đề gộp
 const HEAD_ROW  = 6;     // dòng tên cột
 
 const COLS = [
- {L:'A', k:'stt',    vi:'STT',         en:'No.',        g:'id', t:'ctr', w:38,  get:e=>e.stt, plain:true},
+ {L:'A', k:'stt',    vi:'STT',         en:'No.',        g:'id', t:'ctr', w:38,  get:(e,c)=>c.stt, plain:true},
+   /* c.stt do buildSheetModel() đánh, chạy 1..N trong PHẠM VI KỲ ĐANG XEM.
+      Không dùng e.stt (vị trí trong S.emps) vì người vắng mặt ở kỳ này vẫn
+      chiếm chỗ trong mảng → cột STT sẽ nhảy cóc 1,2,3,4,6,7… trên chứng từ. */
  {L:'B', k:'id',     vi:'Mã NV',       en:'Code',       g:'id', t:'txt', w:62,  get:e=>e.id, text:true},
  {L:'C', k:'ten',    vi:'Họ và tên',   en:'Full name',  g:'id', t:'txt', w:172, get:e=>e.ten, text:true},
  {L:'D', k:'chucVu', vi:'Chức vụ',     en:'Position',   g:'id', t:'txt', w:158, get:e=>e.chucVu, text:true},
@@ -1151,13 +1315,18 @@ function buildSheetModel(monthId, deptId){
   const groups = deptId === 'ALL' ? DEPTS : DEPTS.filter(d => d.id === deptId);
   const rows = [];
   let r = FIRST_ROW;
+  let soTT = 0;                             // bộ đếm STT, reset theo từng lần vẽ
 
   for(const g of groups){
     const list = empsIn(monthId, g.id);
     if(!list.length) continue;
     rows.push({ type:'group', dept:g, count:list.length, row:r++ });
     const from = r;
-    for(const e of list) rows.push({ type:'emp', e, c:calc(e, monthId), row:r++ });
+    for(const e of list){
+      const c = calc(e, monthId);
+      c.stt = ++soTT;                       // số thứ tự liên tục trong kỳ
+      rows.push({ type:'emp', e, c, row:r++ });
+    }
     rows.push({ type:'subtotal', dept:g, from, to:r-1, row:r++ });
   }
   const empRows = rows.filter(x => x.type === 'emp').map(x => x.row);
@@ -2193,6 +2362,7 @@ function renderSheet(){
     html += `<th colspan="${n}"${frozen ? ' class="stick" style="left:0"' : ''}>${esc(b)}</th>`;
     i += n;
   }
+  html += '<th class="act noprint" rowspan="3" title="Sửa hồ sơ nhân sự">⚙</th>';
   html += '</tr><tr class="head">';
   let left = 0;
   cols.forEach(c => {
@@ -2214,13 +2384,13 @@ function renderSheet(){
   /* --- tbody --- */
   for(const row of model.rows){
     if(row.type === 'blank'){
-      html += `<tr><td class="txt" colspan="${cols.length}" style="text-align:center;color:var(--ink-3);padding:18px">`
-            + 'Kỳ lương này chưa có nhân sự nào.</td></tr>';
+      html += `<tr><td class="txt" colspan="${cols.length + 1}" style="text-align:center;color:var(--ink-3);padding:18px">`
+            + 'Kỳ lương này chưa có nhân sự nào — bấm <b>＋ Thêm nhân sự</b> trên thanh công cụ để bắt đầu.</td></tr>';
       continue;
     }
     if(row.type === 'group'){
       html += `<tr class="grp"><td class="txt stick" style="left:0" colspan="3">${esc(row.dept.vi)}</td>`
-            + `<td class="txt" colspan="${Math.max(1, cols.length - 3)}">${esc(row.dept.en)} · ${row.count} nhân viên</td></tr>`;
+            + `<td class="txt" colspan="${Math.max(1, cols.length - 3) + 1}">${esc(row.dept.en)} · ${row.count} nhân viên</td></tr>`;
       continue;
     }
     const isEmp = row.type === 'emp';
@@ -2263,6 +2433,11 @@ function renderSheet(){
       html += `<td class="${cls}" style="${sty}" data-cell="${col.L}${row.row}" data-col="${col.k}"`
             + ` data-kind="${row.type}"${row.from ? ` data-from="${row.from}" data-to="${row.to}"` : ''}>${inner}</td>`;
     });
+    /* Ô thao tác — nằm NGOÀI vòng lặp COLS nên không ảnh hưởng file Excel */
+    html += isEmp
+      ? `<td class="act noprint"><button type="button" class="btn-edit" data-edit="${esc(row.e.uid)}"`
+        + ` title="Sửa hồ sơ ${esc(row.e.ten)}" aria-label="Sửa ${esc(row.e.ten)}">✎</button></td>`
+      : '<td class="act noprint"></td>';
     html += '</tr>';
   }
   html += '</tbody>';
@@ -2285,6 +2460,7 @@ function renderSheet(){
   ].join('');
 
   applySelection();
+  applySearch();          // vẽ lại xong phải lọc lại: innerHTML mới đã xoá hết style.display
 }
 
 /* --- Thanh công thức --- */
@@ -2373,6 +2549,389 @@ document.addEventListener('keydown', ev => {
     nx.focus(); if(nx.select) nx.select(); pendingFocus = null;
   }
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 10A · TÌM KIẾM REAL-TIME  (thuần DOM — KHÔNG đụng vào S.emps)
+   ---------------------------------------------------------------------------
+   Nguyên tắc: đây chỉ là bộ lọc THỊ GIÁC. Mảng nguồn S.emps, các dòng cộng
+   phòng ban và dòng TỔNG CỘNG giữ nguyên — con số kế toán không được đổi chỉ
+   vì người dùng đang gõ tìm kiếm. Chỉ các dòng tr.emp bị ẩn/hiện.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Bỏ dấu tiếng Việt để gõ "nguyen van" vẫn tìm ra "Nguyễn Văn". */
+function boDau(str){
+  return String(str)
+    .normalize('NFD')                        // tách chữ và dấu thành 2 ký tự rời
+    .replace(/[\u0300-\u036f]/g, '')         // xoá dải Combining Diacritical Marks
+    .replace(/\u0111/g, 'd')                 // đ  (U+0111) — NFD không tách được
+    .replace(/\u0110/g, 'D')                 // Đ  (U+0110)
+    .toLowerCase();
+}
+
+/**
+ * Lọc bảng lương theo từ khoá đang gõ.
+ * Gọi mỗi khi người dùng gõ, VÀ mỗi lần renderSheet() vẽ lại bảng — vì
+ * renderSheet() dựng lại innerHTML nên mọi style.display trước đó bị xoá sạch.
+ */
+function applySearch(){
+  const box = $('#searchInput');
+  if(!box) return;
+  const tu   = boDau(box.value.trim());
+  const stat = $('#findStat');
+
+  /* Không có từ khoá → trả bảng về nguyên trạng */
+  if(!tu){
+    $$('#sheet tr.emp').forEach(tr => { tr.style.display = ''; tr.classList.remove('hit'); });
+    if(stat) stat.hidden = true;
+    return;
+  }
+
+  let khop = 0;
+  $$('#sheet tr.emp').forEach(tr => {
+    /* textContent của dòng gồm mã NV, họ tên, chức vụ, bộ phận và các số đã
+       tính. Các ô nhập tay là <input> nên không nằm trong textContent —
+       đọc thêm value của chúng để tìm được cả theo số liệu đã nhập. */
+    const chu = boDau(tr.textContent + ' ' +
+      Array.from(tr.querySelectorAll('input')).map(i => i.value).join(' '));
+    const ok = chu.includes(tu);
+    tr.style.display = ok ? '' : 'none';
+    tr.classList.toggle('hit', ok);
+    if(ok) khop++;
+  });
+
+  /* Dòng .grp (phòng ban), .sub (cộng), .tot (tổng cộng), .blank KHÔNG bị
+     đụng tới — cố ý, để số cộng luôn hiển thị đúng và đầy đủ. */
+
+  if(stat){
+    stat.hidden = false;
+    stat.textContent = khop ? `${khop} dòng khớp` : 'không tìm thấy';
+    stat.classList.toggle('none', khop === 0);
+  }
+}
+
+/** Gắn sự kiện cho ô tìm kiếm. */
+function initSearch(){
+  const box = $('#searchInput');
+  if(!box) return;
+  box.addEventListener('input', applySearch);
+  /* Esc để xoá nhanh từ khoá */
+  box.addEventListener('keydown', ev => {
+    if(ev.key === 'Escape'){ box.value = ''; applySearch(); box.blur(); }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHẦN 10B · THÊM / SỬA HỒ SƠ NHÂN SỰ  (Modal CRUD)
+   ---------------------------------------------------------------------------
+   Nguồn dữ liệu gốc vẫn là mảng S.emps — modal chỉ đọc và ghi vào đó, rồi gọi
+   renderAll() để vẽ lại. Không có chỗ nào sửa thẳng vào DOM của bảng.
+
+   Hai nhóm trường, hai phạm vi ảnh hưởng KHÁC NHAU — đây là điểm quan trọng
+   nhất của màn hình này:
+
+     • Hồ sơ  (mã NV, họ tên, chức vụ, phòng ban) nằm ở cấp nhân viên
+       → sửa là đổi trên MỌI kỳ lương. Sửa lỗi chính tả tên thì phiếu lương
+         tháng 6 cũng phải đúng.
+
+     • Thông số lương (lương chính, các phụ cấp, số NPT, lương đóng BH) nằm
+       trong e.thang[<mã kỳ>]
+       → sửa CHỈ ảnh hưởng kỳ đang xem. Tăng lương tháng 9 không được phép
+         làm sai bảng lương tháng 6 đã chốt và đã trả.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Khai báo các ô nhập. Thêm một trường mới chỉ cần thêm một dòng vào đây —
+   modal, việc đọc form và việc lưu đều chạy theo khai báo này. */
+const F_HOSO = [
+  { k:'id',     lbl:'Mã nhân viên',  req:true, full:false,
+    hint:'Không được trùng. Đây là khoá mà hàm INDEX/MATCH trong file Excel dùng để tra cứu.' },
+  { k:'ten',    lbl:'Họ và tên',     req:true },
+  { k:'chucVu', lbl:'Chức vụ',       req:true },
+  { k:'bp',     lbl:'Phòng ban',     req:true, select:true }
+];
+
+const F_TIEN = [
+  { k:'luongChinh',   lbl:'Lương chính (theo hợp đồng)', hint:'Gốc để tính lương theo ngày công và đơn giá giờ làm thêm' },
+  { k:'luongBH',      lbl:'Lương đóng bảo hiểm',         hint:'Thường bằng lương chính. Bị kẹp giữa mức tham chiếu và trần đóng.' },
+  { k:'pcTrachNhiem', lbl:'Phụ cấp trách nhiệm' },
+  { k:'pcAnTrua',     lbl:'Phụ cấp ăn trưa',             hint:'Miễn thuế tối đa 730.000 đ/tháng' },
+  { k:'pcDienThoai',  lbl:'Phụ cấp điện thoại' },
+  { k:'pcXangXe',     lbl:'Phụ cấp xăng xe' },
+  { k:'npt',          lbl:'Số người phụ thuộc', int:true, hint:'Phải đã đăng ký với cơ quan thuế mới được giảm trừ' }
+];
+
+/* uid của nhân viên đang sửa; null nghĩa là đang thêm mới. */
+let empEditing = null;
+
+/* ---------- Dựng các ô nhập vào modal (chỉ chạy một lần) ---------- */
+function buildEmpForm(){
+  $('#empIdentity').innerHTML = F_HOSO.map(f => {
+    const ctrl = f.select
+      ? `<select id="f_${f.k}">${DEPTS.map(d => `<option value="${d.id}">${esc(d.vi)}</option>`).join('')}</select>`
+      : `<input id="f_${f.k}" type="text" autocomplete="off">`;
+    return `<div class="fld${f.full ? ' full' : ''}"><label for="f_${f.k}">${esc(f.lbl)}`
+         + `${f.req ? ' <b>*</b>' : ''}</label>${ctrl}`
+         + `${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ''}</div>`;
+  }).join('');
+
+  $('#empMoney').innerHTML = F_TIEN.map(f =>
+    `<div class="fld"><label for="f_${f.k}">${esc(f.lbl)}</label>`
+    + `<input id="f_${f.k}" class="num" type="text" inputmode="numeric" autocomplete="off">`
+    + `${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ''}</div>`).join('');
+}
+
+/* ---------- Mở modal ----------
+   uid = null  → thêm mới (form trống, lương gợi ý 0)
+   uid có giá trị → sửa (form điền sẵn hồ sơ + thông số của KỲ ĐANG XEM) */
+function openEmpModal(uid){
+  const P = monthObj();
+  const e = uid ? S.emps.find(x => x.uid === uid) : null;
+  const t = e ? snap(e, P.id) : null;
+  empEditing = e ? e.uid : null;
+
+  $('#empModalTitle').textContent = e ? 'Sửa hồ sơ nhân sự' : 'Thêm nhân sự mới';
+  $('#empModalSub').textContent   = e ? `${e.id} — ${e.ten}` : P.vi;
+  $('#empPeriodName').textContent = `· ${P.vi}`;
+  $('#empErr').hidden = true;
+
+  const sau = MONTHS.filter(m => cmpPeriod(m, P) > 0);
+  $('#empScope').innerHTML = e
+    ? 'Mã NV, họ tên, chức vụ, phòng ban áp dụng cho <b>mọi kỳ lương</b>. '
+      + `Lương và phụ cấp chỉ áp dụng cho <b>${esc(P.vi)}</b> — các kỳ đã chốt trước đó giữ nguyên số cũ.`
+    : `Nhân sự mới sẽ được thêm vào <b>${esc(P.vi)}</b>`
+      + (sau.length ? ` và <b>${sau.length} kỳ sau đó</b>` : '')
+      + '. Ngày công, giờ OT, thưởng, tạm ứng để trống (0) — nhập trực tiếp trên bảng lương.';
+
+  /* Điền sẵn giá trị */
+  F_HOSO.forEach(f => { $('#f_' + f.k).value = e ? e[f.k] : (f.k === 'bp' ? DEPTS[0].id : ''); });
+  F_TIEN.forEach(f => { $('#f_' + f.k).value = t ? nf.format(t[f.k]) : '0'; });
+  $$('#empForm input').forEach(i => i.classList.remove('bad'));
+
+  $('#empDelete').hidden = !e;
+  $('#empModal').classList.add('on');
+  setTimeout(() => $('#f_' + (e ? 'ten' : 'id')).focus(), 40);
+}
+
+function closeEmpModal(){
+  $('#empModal').classList.remove('on');
+  empEditing = null;
+}
+
+/* Chỉ giữ chữ số: "12.000.000" hoặc "12,000,000 đ" → 12000000 */
+const soTien = v => { const n = Number(String(v).replace(/[^\d]/g, '')); return isFinite(n) && n > 0 ? n : 0; };
+
+/* ---------- Lưu (dùng chung cho cả Thêm và Sửa) ---------- */
+function saveEmp(){
+  const P    = monthObj();
+  const err  = $('#empErr');
+  const loi  = [];
+  $$('#empForm input, #empForm select').forEach(i => i.classList.remove('bad'));
+
+  /* --- Bước 1: đọc và kiểm tra phần hồ sơ --- */
+  const hs = {};
+  F_HOSO.forEach(f => {
+    const el = $('#f_' + f.k);
+    hs[f.k] = String(el.value).trim();
+    if(f.req && !hs[f.k]){ loi.push(`“${f.lbl}” không được để trống.`); el.classList.add('bad'); }
+  });
+
+  /* Mã NV phải duy nhất — so với mọi nhân viên KHÁC (bỏ qua chính mình) */
+  if(hs.id && S.emps.some(x => x.uid !== empEditing && x.id.toLowerCase() === hs.id.toLowerCase())){
+    loi.push(`Mã nhân viên “${hs.id}” đã có người khác dùng.`);
+    $('#f_id').classList.add('bad');
+  }
+
+  /* --- Bước 2: đọc phần tiền --- */
+  const t = {};
+  F_TIEN.forEach(f => { t[f.k] = soTien($('#f_' + f.k).value); });
+  if(t.npt > 20){ loi.push('Số người phụ thuộc không hợp lý (tối đa 20).'); $('#f_npt').classList.add('bad'); }
+  if(t.luongChinh === 0) loi.push('Lương chính đang bằng 0 — kiểm tra lại nếu đây không phải chủ ý.');
+  if(t.luongBH === 0)    t.luongBH = t.luongChinh;      // bỏ trống thì lấy bằng lương chính
+
+  const chan = loi.filter(x => !x.includes('bằng 0'));  // cảnh báo lương 0 không chặn lưu
+  if(chan.length){
+    err.innerHTML = chan.map(x => '• ' + esc(x)).join('<br>');
+    err.hidden = false;
+    return;
+  }
+
+  /* --- Bước 3: ghi vào mảng nguồn S.emps --- */
+  if(empEditing){
+    /* SỬA: tìm đúng nhân viên theo uid (không theo mã NV, vì mã NV có thể vừa bị đổi) */
+    const e = S.emps.find(x => x.uid === empEditing);
+    if(!e){ closeEmpModal(); return; }
+    const maCu = e.id;
+    Object.assign(e, hs);                               // hồ sơ: áp dụng cho mọi kỳ
+    Object.assign(e.thang[P.id], t);                    // tiền: chỉ kỳ đang xem
+    if(S.empSel === maCu) S.empSel = e.id;              // phiếu lương đang chọn người này
+    /* Hồ sơ nằm trên MỌI kỳ nên phải ghi lại tất cả các kỳ người này có mặt,
+       không chỉ kỳ đang xem. */
+    MONTHS.forEach(m => { if(e.thang[m.id]) persistPeriod(m.id); });
+    toast(`Đã cập nhật hồ sơ ${e.id} — ${e.ten}.`);
+  } else {
+    /* THÊM MỚI: sinh uid, tạo ảnh chụp cho kỳ hiện tại và các kỳ sau nó */
+    const e = { uid:newUid(), stt:S.emps.length + 1, ...hs, thang:{} };
+    const dich = MONTHS.filter(m => cmpPeriod(m, P) >= 0);
+    dich.forEach(m => {
+      const snapMoi = {};
+      F_HOP_DONG.forEach(k => { snapMoi[k] = t[k] || 0; });
+      F_BIEN_DONG.forEach(k => { snapMoi[k] = 0; });     // biến động luôn bắt đầu từ 0
+      e.thang[m.id] = snapMoi;
+    });
+    S.emps.push(e);
+    S.emps.forEach((x, i) => { x.stt = i + 1; });
+    dich.forEach(m => persistPeriod(m.id));
+    persistIndex();
+    toast(`Đã thêm ${e.id} — ${e.ten} vào ${dich.length} kỳ lương (từ ${P.vi}). `
+        + 'Nhớ nhập ngày công cho người này trên bảng lương.');
+  }
+
+  closeEmpModal();
+  syncPeriodPickers();
+  renderAll();                                          // vẽ lại từ mảng nguồn
+}
+
+/* ---------- Xoá khỏi kỳ đang xem, có HOÀN TÁC 30 giây ----------
+   Không xoá khỏi các kỳ đã qua: bảng lương cũ là chứng từ đã trả, phải giữ.
+
+   Vì sao bỏ confirm(): hộp thoại chặn luồng và bắt kế toán quyết định TRƯỚC khi
+   nhìn thấy kết quả. Kiểu Gmail thì ngược lại — làm ngay, cho nhìn thấy, rồi mới
+   cho cơ hội rút lại. An toàn hơn và đỡ phiền hơn.                               */
+
+const UNDO_MS = 30000;          // thời gian được phép hoàn tác
+let undoCache = null;           // { uid, viTri, e, snapshot, P, coGoHan }
+let undoTimer = null;
+
+/** Ghi thật xuống localStorage rồi dọn trạng thái hoàn tác. */
+function commitUndo(){
+  if(!undoCache) return;
+  const { P } = undoCache;
+  clearTimeout(undoTimer);
+  undoTimer  = null;
+  undoCache  = null;
+  persistPeriod(P.id);          // đến đây việc xoá mới thành sự thật trên đĩa
+  persistIndex();
+  hideUndoToast();
+}
+
+function showUndoToast(msg){
+  const t = $('#undoToast');
+  $('#undoMsg').innerHTML = msg;
+  t.style.setProperty('--ut-dur', UNDO_MS + 'ms');
+  /* ép trình duyệt chạy lại animation thanh đếm ngược cho lần xoá kế tiếp */
+  t.classList.remove('on');
+  void t.offsetWidth;
+  t.classList.add('on');
+}
+function hideUndoToast(){ $('#undoToast').classList.remove('on'); }
+
+function deleteEmpFromPeriod(){
+  const P = monthObj();
+  const e = S.emps.find(x => x.uid === empEditing);
+  if(!e) return;
+
+  /* Đang có một lần xoá chờ hoàn tác → chốt luôn lần đó rồi mới xoá tiếp,
+     nếu không undoCache bị ghi đè và lần xoá trước không bao giờ được lưu. */
+  if(undoCache) commitUndo();
+
+  /* 1 · Sao chép sâu ảnh chụp của kỳ này trước khi xoá.
+         structuredClone có sẵn trên mọi trình duyệt hiện hành; JSON là phương
+         án dự phòng. Dữ liệu chỉ gồm số nên cả hai đều an toàn.               */
+  const snapshot = typeof structuredClone === 'function'
+    ? structuredClone(e.thang[P.id])
+    : JSON.parse(JSON.stringify(e.thang[P.id]));
+
+  const viTri   = S.emps.indexOf(e);                       // để trả lại đúng chỗ cũ
+  const conLai  = MONTHS.filter(m => m.id !== P.id && e.thang[m.id]).length;
+
+  /* 2 · Xoá khỏi bộ nhớ (CHƯA ghi localStorage) */
+  delete e.thang[P.id];
+  const coGoHan = !Object.keys(e.thang).length;            // hết kỳ → gỡ khỏi sổ
+  if(coGoHan) S.emps = S.emps.filter(x => x.uid !== e.uid);
+  S.emps.forEach((x, i) => { x.stt = i + 1; });
+
+  undoCache = { uid:e.uid, viTri, e, snapshot, P, coGoHan };
+
+  /* 3 · Đóng modal, vẽ lại — nhân viên biến mất khỏi giao diện ngay */
+  closeEmpModal();
+  syncPeriodPickers();
+  renderAll();
+
+  /* 4 · Hiện toast hoàn tác */
+  showUndoToast(`Đã gỡ <b>${esc(e.ten)}</b> khỏi kỳ ${esc(P.vi)}.`
+    + (conLai ? ` Vẫn còn trên ${conLai} kỳ khác.` : ' Đây là kỳ cuối cùng có người này.'));
+
+  /* 5 · Hết 30 giây mà không hoàn tác → lưu thật */
+  undoTimer = setTimeout(commitUndo, UNDO_MS);
+}
+
+/** Khôi phục lại nhân viên vừa gỡ. */
+function undoDelete(){
+  if(!undoCache) return;
+  const { e, snapshot, viTri, P, coGoHan } = undoCache;
+
+  clearTimeout(undoTimer);
+  undoTimer = null;
+
+  e.thang[P.id] = snapshot;                                // trả lại ảnh chụp của kỳ
+  if(coGoHan && !S.emps.some(x => x.uid === e.uid)){
+    S.emps.splice(Math.min(viTri, S.emps.length), 0, e);   // đặt lại đúng vị trí cũ
+  }
+  S.emps.forEach((x, i) => { x.stt = i + 1; });
+
+  /* Bắt buộc phải ghi lại localStorage, không chỉ renderAll():
+     trong 30 giây vừa rồi, mọi thao tác khác (sửa một ô, đổi kỳ, thêm nhân sự)
+     đều gọi persistPeriod/persistIndex và đã ghi trạng thái ĐÃ XOÁ xuống đĩa.
+     Không ghi lại thì tải trang là mất người này thật.                        */
+  persistPeriod(P.id);
+  persistIndex();
+
+  undoCache = null;
+  hideUndoToast();
+  syncPeriodPickers();
+  renderAll();
+  toast(`Đã khôi phục ${e.id} — ${e.ten} vào kỳ ${P.vi}.`);
+}
+
+function initUndo(){
+  $('#undoBtn').addEventListener('click', undoDelete);
+  /* Ctrl/Cmd + Z khi toast đang hiện cũng hoàn tác được */
+  document.addEventListener('keydown', ev => {
+    if(undoCache && (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){
+      ev.preventDefault(); undoDelete();
+    }
+  });
+}
+
+/* ---------- Gắn sự kiện ---------- */
+function initEmpModal(){
+  buildEmpForm();
+
+  $('#btnAddEmp').addEventListener('click', () => openEmpModal(null));
+
+  /* Uỷ quyền sự kiện: nút ✎ được sinh lại mỗi lần renderTable nên không gắn
+     listener trực tiếp lên từng nút, mà bắt ở cấp document. */
+  document.addEventListener('click', ev => {
+    const btn = ev.target.closest('[data-edit]');
+    if(btn) openEmpModal(btn.dataset.edit);
+  });
+
+  $('#empForm').addEventListener('submit', ev => { ev.preventDefault(); saveEmp(); });
+  $('#empCancel').addEventListener('click', closeEmpModal);
+  $('#empClose').addEventListener('click', closeEmpModal);
+  $('#empDelete').addEventListener('click', deleteEmpFromPeriod);
+
+  /* Bấm ra nền tối thì đóng; bấm trong hộp thì không */
+  $('#empModal').addEventListener('mousedown', ev => { if(ev.target.id === 'empModal') closeEmpModal(); });
+  document.addEventListener('keydown', ev => {
+    if(ev.key === 'Escape' && $('#empModal').classList.contains('on')) closeEmpModal();
+  });
+
+  /* Ô tiền: tự chấm phân cách nghìn khi rời ô cho dễ đọc */
+  F_TIEN.forEach(f => {
+    const el = $('#f_' + f.k);
+    el.addEventListener('blur', () => { el.value = nf.format(soTien(el.value)); });
+  });
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PHẦN 11 · TAB PHIẾU LƯƠNG
@@ -3173,6 +3732,10 @@ function init(){
     renderSheet();
   }));
 
+  initEmpModal();
+  initSearch();
+  initUndo();
+
   /* Xuất & in */
   $('#btnXlsx').addEventListener('click', withBusy('#btnXlsx', () => exportWorkbook()));
   $('#slipXlsx').addEventListener('click', withBusy('#slipXlsx', () => exportPayslip(S.empSel)));
@@ -3226,6 +3789,38 @@ function withBusy(selector, fn){
     }, 30);
   };
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHỐT SỔ KHI RỜI TRANG
+   ---------------------------------------------------------------------------
+   Nếu người dùng đóng tab hoặc F5 trong lúc còn 30 giây chờ hoàn tác, setTimeout
+   không bao giờ chạy → việc xoá không được ghi xuống localStorage → tải lại
+   trang thấy nhân viên "sống lại". Người dùng đã nhìn thấy dòng đó biến mất,
+   nên đây là hành vi sai. Chốt sổ ngay trước khi trang đóng.
+
+   commitUndo() ghi bằng localStorage.setItem — API ĐỒNG BỘ, nên chạy được trọn
+   vẹn trong handler rời trang. Nếu là fetch/IndexedDB thì phải dùng
+   navigator.sendBeacon vì trình duyệt sẽ cắt ngang tác vụ bất đồng bộ.
+
+   Vì sao bắt CẢ HAI sự kiện:
+     • beforeunload — chắc ăn trên desktop, nhưng iOS/Android thường bỏ qua.
+     • pagehide     — đáng tin hơn nhiều trên di động và khi trang vào bfcache.
+   Cả hai đều KHÔNG kích hoạt khi chỉ chuyển tab, nên thao tác hoàn tác vẫn còn
+   nguyên nếu người dùng ngó sang tab khác rồi quay lại.
+
+   Cố tình KHÔNG dùng visibilitychange: nó bắn mỗi lần chuyển tab, sẽ chốt sổ
+   sớm và giết mất cơ hội hoàn tác chỉ vì người dùng liếc sang cửa sổ khác.
+
+   Lưu ý: KHÔNG gọi preventDefault() / gán returnValue ở đây — làm vậy trình
+   duyệt sẽ bật hộp thoại "Rời khỏi trang?", điều ta không hề muốn.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function chotSoTruocKhiRoiTrang(){
+  if(!undoCache) return;            // không có gì đang chờ → khỏi làm gì
+  try{ commitUndo(); }              // commitUndo() tự bỏ qua nếu undoCache rỗng
+  catch(e){ /* đang đóng trang, không còn chỗ nào báo lỗi */ }
+}
+window.addEventListener('beforeunload', chotSoTruocKhiRoiTrang);
+window.addEventListener('pagehide',     chotSoTruocKhiRoiTrang);
 
 document.addEventListener('DOMContentLoaded', init);
 
